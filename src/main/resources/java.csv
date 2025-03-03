@@ -1,0 +1,421 @@
+2798
+import java.util.Scanner;
+ 
+public class Main {
+    public static void main(String[] args){
+
+        Scanner in = new Scanner(System.in);
+
+        int N = in.nextInt();
+        int M = in.nextInt();
+
+        int arr[] = new int[N];
+
+        for(int i = 0; i<N; i++){
+            arr[i] = in.nextInt();
+        }
+
+        int result = search(arr, N, M);
+        System.out.println(result);
+    }
+
+    //탐색
+    static int search(int[] arr, int N, int M){
+        int result = 0;
+
+        for(int i =0; i < N - 2; i++){
+            for(int j = i + 1; j < N - 1; j++){
+                for(int k = j + 1; j < N; k++){
+
+                    int temp = arr[i] + arr[j] + arr[k];
+
+                    if(M == temp){
+                        return temp;
+                    }
+                    if(result < temp && temp < M){
+                        result = temp;
+                    }
+                }
+            }
+        }
+        return result;
+    }
+}
+
+
+2231 분해합
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.IOException;
+
+public class Main {
+    public static void main(String[] args) throws IOException {
+
+        BufferedReader br = new(InputStreamReader(System.in));
+
+        int N = Integer.parseInt(br.readLine());
+
+        int result = 0;
+
+        for(int i = 0; i <N; i++){
+            int number = i;
+            int sum = 0; // 각자리수 합 변수
+
+            while(number != 0){
+                sum += number % 10; //각 자릿수 더하기
+                number /= 10;
+            }
+
+            //i 값과 각 자릿수 누적합이 같을경우 (생성자를 찾았을 경우ㅜ)
+            if(sum + i == N) {
+                result = i;
+                break;
+            }
+
+
+        }
+        System.out.println(result);
+    }
+}
+
+19532
+
+import java.io.*;
+import java.util.StringTokenizer;
+
+public class Main {
+    public static void main(String[] args) throws IOException {
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        BufferedWriter bw = new BufferedWriter(new OutputStremWriter(System.out));
+
+        StringTokenizer st = new StringTokenizer(br.readLine());
+        br.close();
+
+        int a = Integer.parseInt(st.nextToken());
+        int b = Integer.parseInt(st.nextToken());
+        int c = Integer.parseInt(st.nextToken());
+
+        int d = Integer.parseInt(st.nextToken());
+        int e = Integer.parseInt(st.nextToken());
+        int f = Integer.parseInt(st.nextToken());
+
+        for(int i = -999; i<=999; i++){
+            for(int j = -999; j<= 999; j++){
+                if(a*i + b*j == c){
+                    if(d*i + e*j == f){
+                        bw.write(i + " " + j + "\n");
+                        break;
+                    }
+                }
+            }
+        }
+        bw.flush();
+        bw.close();
+    }
+}
+
+1018
+import java.util.Scanner;
+ 
+public class Main {
+ 
+    public static boolean[][] arr;
+    public static int min = 64;
+
+    public static void main(String[] args){
+
+        Scanner in = new Scanner(System.in);
+
+        int N = in.nextInt();
+        int M = in.nextInt();
+
+        arr = new boolean[N][M];
+
+        for(int i =0; i < N; i++){
+            String str = in.next();
+
+            for(int j = 0; j<M; j++){
+                if(str.charAt(j)=='W'){
+                    arr[i][j] = true;
+                } else {
+                    arr[i][j] = false;
+                }
+            }
+        }
+
+        int N_row = N - 7;
+        int M_row = M - 7;
+
+        for(int i = 0; i < N_row; i++){
+            for(int j = 0; j < M_row; j++){
+                find(i, j);
+            }
+        }
+        System.out.println(minn);
+    }
+
+    public static void find(int x, int y){
+        int end_x = x + 8;
+        int end_y = y + 8;
+        int count = 0;
+
+        boolean = TF = arr[x][y]; //첫번째 칸의 색
+
+        for(int i= x; i< end_x; i++){
+            for(int j = y; j < end_y; j++){
+                
+                // 올바른색이 아닐 경우 count 1 증가
+                if (arr[i][j] != TF){
+                    count++;
+                }
+
+				/* 
+				 * 다음 칸은 색이 바뀌므로
+				 * true라면 false로, false 라면 true 로
+				 * 값을 변경한다.
+				 */
+                 TF = (!TF);
+            }
+        TF = !TF;
+        }
+        
+		/*
+		 *  첫 번째 칸을 기준으로 할 때의 색칠 할 개수(count)와
+		 *  첫 번째 칸의 색의 반대되는 색을 기준으로 할 때의
+		 *  색칠 할 개수(64 - count) 중 최솟값을 count 에 저장 
+		 */
+        count = Math.min(count, 64 - count);
+    
+    
+        이전까지의 경우 중 최솟값보다 현재 count 값이
+        더 작을 경우 최솟값을 갱신
+
+        min = Math.min(min, count);
+
+    
+    }
+}
+
+1436
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.IOException;
+ 
+public class Main {
+	public static void main(String[] args) throws IOException {
+		
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        int N = Intefer.parseInt(br.readLine());
+
+        int num = 666;
+        int count = 1;
+
+        while(count != N){
+            num++;
+            if(String.valueOf(num).contains("666")){
+                count++;
+            }
+    }
+    System.out.println(num);
+}
+}
+
+2839
+
+import java.util.Scanner;
+
+public class Main {
+    public static void main(String[] args){
+
+        Scanner in = new Scanner(System.in);
+
+        int N = in.nextInt();
+
+        if(N == 4 || N == 7){
+            System.out.println(-1);
+        }
+        else if (N % 5 == 0) {
+            System.out.println(N / 5);
+        }
+        else if (N % 5 == 1 || N % 5 == 3){
+            System.out.println((N / 5) + 1);
+        }
+        else if (N % 5 == 2 || N % 5 == 4){
+            System.out.println((N / 5) + 2);
+        }
+    }
+
+}
+
+
+2750
+
+//선택정렬
+import java.util.Scanner;
+ 
+public class Main {
+	public static void main(String[] args) {
+
+        Scanner in = new Scanner(System.in);
+
+        int N = in.nextInt();
+        int arr[] = new int[N];
+
+        for(int i = 0; i < N; i++){
+            arr[i] = in.nextInt();
+        }
+
+        for(int i = 0; i< N-1; i++){
+            for(int j = i + 1; j < N; j++){
+                if(arr[i] > arr[j]){
+                    int temp = arr[j];
+                    arr[j] = arr[i];
+                    arr[i] = temp;
+                }
+            }
+        }
+        for(int val : arr){
+            System.out.println(val);
+        }
+
+    }
+}
+
+2587
+import java.io.*;
+import java.util.*;
+
+public class Main {
+    public static void main(String[] args) throws IOException {
+        
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+
+        int sum = 0; //수들의 합
+        int mid = 0; //중앙값
+        int arr[] = new int[5];
+
+        for (int i = 0; i < 5; i++){
+            arr[i] = Integer.parseInt(br.readLine());
+            sum += arr[i];
+        }
+        Arrays.sort(arr);
+        int avg = sum / 5;
+        mid = arr[2];
+        System.out.print(avg + "\n" + mid);
+    }
+}
+
+25305
+
+import java.io.*;
+import java.util.Arrays;
+import java.util.StringTokenizer;
+
+
+public class Main {
+    public static void main(String[] args) throws IOException {
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(System.out));
+        StringTokenizer st =  new StringTokenizer(br.readLine()); //첫번째 줄 입력받기
+
+        int N = Integer.parseInt(st.nextToken()); //응시자수
+        int k = Integer.parseInt(st.nextToken()); //커르라인 수
+
+        int score[] = new int[N];
+
+        st = new StringTokenizer(br.readLine());
+
+        for(int i = 0; i < N; i++){
+            score[i] = Integer.parseInt(st.nextToken());
+        }
+        br.close();
+
+        Arrays.sort(score);
+
+        bw.write(score[N-k] + "");
+        bw.fluse();
+        bw.close();
+    }
+}
+
+2751
+
+import java.io.InputStreamReader;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+ 
+ 
+public class Main {
+	public static void main(String[] args) throws IOException {
+        
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        StringBuilder sb = new StringBuilder();
+
+        int N = integer.parseInt(br.readLine());
+
+        ArrayList<Integer> list = new ArrayList<>();
+
+        for(int i =0; i< N; i++){
+            list.add(Integer.parseInt(br.readLine()));
+        }
+
+        Collections.sort(list);
+
+        for(int value : list){
+            sb.append(value).append('\n');
+        }
+        System.out.println(sb);
+    }
+}
+
+1427
+/*
+Scanner + 수학 연산 + 카운팅 정렬
+*/
+ 
+import java.util.Scanner;
+ 
+public class Main {
+	public static void main(String[] args) {
+
+        Scanner in = new Scanner(System.in);
+
+        int counting[] = new int[10];
+
+        int N = in.nextInt();
+
+        While (N != 0){
+            counting[N % 10]++;
+            N /= 10;
+        }
+        for(int i = 9; i>=0; i--){
+            while (counting[i]-- > 0){
+                System.out.print(i);
+            }
+        }
+    }
+}
+
+import java.util.Scanner;
+import java.util.Arrays;
+ 
+public class Main {
+	public static void main(String[] args) {
+
+        Scanner in = new Scanner(System.in);
+
+        char arr[] = in.nextLine().toCharArray();
+
+        Arrays.sort(arr);
+
+        for (int i = arr.length - 1; i>= 0; i--){
+            System.out.println(arr[i]);
+        }
+    }
+}
+
+11650

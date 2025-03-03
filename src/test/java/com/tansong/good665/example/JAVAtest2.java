@@ -177,7 +177,7 @@ public class JAVAtest2 {
     //600
     @Test
 	public void contextLoads2_2480() {
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        //BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
     }
 
 
