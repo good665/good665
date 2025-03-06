@@ -71,8 +71,6 @@ public class Main {
                 result = i;
                 break;
             }
-
-
         }
         System.out.println(result);
     }
@@ -152,7 +150,7 @@ public class Main {
                 find(i, j);
             }
         }
-        System.out.println(minn);
+        System.out.println(min);
     }
 
     public static void find(int x, int y){
@@ -160,7 +158,7 @@ public class Main {
         int end_y = y + 8;
         int count = 0;
 
-        boolean = TF = arr[x][y]; //첫번째 칸의 색
+        boolean TF = arr[x][y]; //첫번째 칸의 색
 
         for(int i= x; i< end_x; i++){
             for(int j = y; j < end_y; j++){
@@ -188,8 +186,8 @@ public class Main {
         count = Math.min(count, 64 - count);
     
     
-        이전까지의 경우 중 최솟값보다 현재 count 값이
-        더 작을 경우 최솟값을 갱신
+        //이전까지의 경우 중 최솟값보다 현재 count 값이
+        //더 작을 경우 최솟값을 갱신
 
         min = Math.min(min, count);
 
