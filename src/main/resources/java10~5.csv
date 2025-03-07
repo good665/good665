@@ -350,5 +350,87 @@ public class Main {
     }
 }
 
-978
+1978
 
+import java.io.*;
+import java.util.*;
+
+public class Main {
+    public static void main(String[] args) throws IOException {
+        
+        Scanner sc = new Scanner(System.in);
+
+        int A = sc.nextInt();
+        int count = 0;
+
+        for(int i=0; i<A; i++){
+            int arr[i] = sc.next();
+
+            if(arr[i] % i == 0) {
+                count++;
+            }
+        }
+        System.out.println(count);
+        
+    }
+}
+
+import java.io.*;
+import java.util.*;
+
+public class Main {
+    public static void main(String[] args) throws IOException {
+        
+        Scanner sc = new Scanner(System.in);
+
+        int A = sc.nextInt();
+        int count = 0;
+
+        for(int i=0; i<A; i++){
+            boolean isPrime = true;
+
+            int num = in.nextInt();
+
+            if(num == 1){ // 1 인 경우 다음 반복문으로
+                continue;
+            }
+            
+            for(int j = 2; j <= Math.sqrt(num); j++){
+                if(num % j == 0){
+                    isPrime = false;
+                    break;
+
+                }
+            }
+            if(isPrime){
+                count++;
+            }
+        }
+        System.out.println(count);
+
+    }
+}
+
+import java.util.*;
+
+public class Main {
+    public static void main(String[] args) throws IOException {
+        
+        Scanner sc = new Scanner(System.in);
+        int num = sc.nextInt();
+        int count = 0;
+
+        for(int i=0; i< num; i++){
+            int isPrime = sc.nextInt();
+            for(int j=2; j<=isPrime; j++){
+                if(j == isPrime){
+                    count++;
+                }
+                if(isPrime % j == 0){
+                    break;
+                }
+            }
+        }
+        System.out.println(count);
+    }
+}
