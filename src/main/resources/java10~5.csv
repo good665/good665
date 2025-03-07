@@ -344,7 +344,7 @@ public class Main {
                 System.out.println(sb);
             }
             else {
-                
+                System.out.println(n + " is NOT perfect.");
             }
         }
 
