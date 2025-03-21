@@ -1,0 +1,764 @@
+2798
+import java.util.Scanner;
+ 
+public class Main {
+    public static void main(String[] args){
+
+        Scanner in = new Scanner(System.in);
+
+        int N = in.nextInt();
+        int M = in.nextInt();
+
+        int arr[] = new int[N];
+
+        for(int i = 0; i<N; i++){
+            arr[i] = in.nextInt();
+        }
+
+        int result = search(arr, N, M);
+        System.out.println(result);
+    }
+
+    //탐색
+    static int search(int[] arr, int N, int M){
+        int result = 0;
+
+        for(int i =0; i < N - 2; i++){
+            for(int j = i + 1; j < N - 1; j++){
+                for(int k = j + 1; j < N; k++){
+
+                    int temp = arr[i] + arr[j] + arr[k];
+
+                    if(M == temp){
+                        return temp;
+                    }
+                    if(result < temp && temp < M){
+                        result = temp;
+                    }
+                }
+            }
+        }
+        return result;
+    }
+}
+
+
+2231 분해합
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.IOException;
+
+public class Main {
+    public static void main(String[] args) throws IOException {
+
+        BufferedReader br = new(InputStreamReader(System.in));
+
+        int N = Integer.parseInt(br.readLine());
+
+        int result = 0;
+
+        for(int i = 0; i <N; i++){
+            int number = i;
+            int sum = 0; // 각자리수 합 변수
+
+            while(number != 0){
+                sum += number % 10; //각 자릿수 더하기
+                number /= 10;
+            }
+
+            //i 값과 각 자릿수 누적합이 같을경우 (생성자를 찾았을 경우ㅜ)
+            if(sum + i == N) {
+                result = i;
+                break;
+            }
+        }
+        System.out.println(result);
+    }
+}
+
+19532
+
+import java.io.*;
+import java.util.StringTokenizer;
+
+public class Main {
+    public static void main(String[] args) throws IOException {
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        BufferedWriter bw = new BufferedWriter(new OutputStremWriter(System.out));
+
+        StringTokenizer st = new StringTokenizer(br.readLine());
+        br.close();
+
+        int a = Integer.parseInt(st.nextToken());
+        int b = Integer.parseInt(st.nextToken());
+        int c = Integer.parseInt(st.nextToken());
+
+        int d = Integer.parseInt(st.nextToken());
+        int e = Integer.parseInt(st.nextToken());
+        int f = Integer.parseInt(st.nextToken());
+
+        for(int i = -999; i<=999; i++){
+            for(int j = -999; j<= 999; j++){
+                if(a*i + b*j == c){
+                    if(d*i + e*j == f){
+                        bw.write(i + " " + j + "\n");
+                        break;
+                    }
+                }
+            }
+        }
+        bw.flush();
+        bw.close();
+    }
+}
+
+1018
+import java.util.Scanner;
+ 
+public class Main {
+ 
+    public static boolean[][] arr;
+    public static int min = 64;
+
+    public static void main(String[] args){
+
+        Scanner in = new Scanner(System.in);
+
+        int N = in.nextInt();
+        int M = in.nextInt();
+
+        arr = new boolean[N][M];
+
+        for(int i =0; i < N; i++){
+            String str = in.next();
+
+            for(int j = 0; j<M; j++){
+                if(str.charAt(j)=='W'){
+                    arr[i][j] = true;
+                } else {
+                    arr[i][j] = false;
+                }
+            }
+        }
+
+        int N_row = N - 7;
+        int M_row = M - 7;
+
+        for(int i = 0; i < N_row; i++){
+            for(int j = 0; j < M_row; j++){
+                find(i, j);
+            }
+        }
+        System.out.println(min);
+    }
+
+    public static void find(int x, int y){
+        int end_x = x + 8;
+        int end_y = y + 8;
+        int count = 0;
+
+        boolean TF = arr[x][y]; //첫번째 칸의 색
+
+        for(int i= x; i< end_x; i++){
+            for(int j = y; j < end_y; j++){
+                
+                // 올바른색이 아닐 경우 count 1 증가
+                if (arr[i][j] != TF){
+                    count++;
+                }
+
+				/* 
+				 * 다음 칸은 색이 바뀌므로
+				 * true라면 false로, false 라면 true 로
+				 * 값을 변경한다.
+				 */
+                 TF = (!TF);
+            }
+        TF = !TF;
+        }
+        
+		/*
+		 *  첫 번째 칸을 기준으로 할 때의 색칠 할 개수(count)와
+		 *  첫 번째 칸의 색의 반대되는 색을 기준으로 할 때의
+		 *  색칠 할 개수(64 - count) 중 최솟값을 count 에 저장 
+		 */
+        count = Math.min(count, 64 - count);
+    
+    
+        //이전까지의 경우 중 최솟값보다 현재 count 값이
+        //더 작을 경우 최솟값을 갱신
+
+        min = Math.min(min, count);
+
+    
+    }
+}
+
+1436
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.IOException;
+ 
+public class Main {
+	public static void main(String[] args) throws IOException {
+		
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        int N = Intefer.parseInt(br.readLine());
+
+        int num = 666;
+        int count = 1;
+
+        while(count != N){
+            num++;
+            if(String.valueOf(num).contains("666")){
+                count++;
+            }
+    }
+    System.out.println(num);
+}
+}
+
+2839
+
+import java.util.Scanner;
+
+public class Main {
+    public static void main(String[] args){
+
+        Scanner in = new Scanner(System.in);
+
+        int N = in.nextInt();
+
+        if(N == 4 || N == 7){
+            System.out.println(-1);
+        }
+        else if (N % 5 == 0) {
+            System.out.println(N / 5);
+        }
+        else if (N % 5 == 1 || N % 5 == 3){
+            System.out.println((N / 5) + 1);
+        }
+        else if (N % 5 == 2 || N % 5 == 4){
+            System.out.println((N / 5) + 2);
+        }
+    }
+
+}
+
+정렬
+2750
+
+//선택정렬
+import java.util.Scanner;
+ 
+public class Main {
+	public static void main(String[] args) {
+
+        Scanner in = new Scanner(System.in);
+
+        int N = in.nextInt();
+        int arr[] = new int[N];
+
+        for(int i = 0; i < N; i++){
+            arr[i] = in.nextInt();
+        }
+
+        for(int i = 0; i< N-1; i++){
+            for(int j = i + 1; j < N; j++){
+                if(arr[i] > arr[j]){
+                    int temp = arr[j];
+                    arr[j] = arr[i];
+                    arr[i] = temp;
+                }
+            }
+        }
+        for(int val : arr){
+            System.out.println(val);
+        }
+
+    }
+}
+
+2587
+import java.io.*;
+import java.util.*;
+
+public class Main {
+    public static void main(String[] args) throws IOException {
+        
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+
+        int sum = 0; //수들의 합
+        int mid = 0; //중앙값
+        int arr[] = new int[5];
+
+        for (int i = 0; i < 5; i++){
+            arr[i] = Integer.parseInt(br.readLine());
+            sum += arr[i];
+        }
+        Arrays.sort(arr);
+        int avg = sum / 5;
+        mid = arr[2];
+        System.out.print(avg + "\n" + mid);
+    }
+}
+
+25305
+
+import java.io.*;
+import java.util.Arrays;
+import java.util.StringTokenizer;
+
+
+public class Main {
+    public static void main(String[] args) throws IOException {
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(System.out));
+        StringTokenizer st =  new StringTokenizer(br.readLine()); //첫번째 줄 입력받기
+
+        int N = Integer.parseInt(st.nextToken()); //응시자수
+        int k = Integer.parseInt(st.nextToken()); //커르라인 수
+
+        int score[] = new int[N];
+
+        st = new StringTokenizer(br.readLine());
+
+        for(int i = 0; i < N; i++){
+            score[i] = Integer.parseInt(st.nextToken());
+        }
+        br.close();
+
+        Arrays.sort(score);
+
+        bw.write(score[N-k] + "");
+        bw.flush();
+        bw.close();
+    }
+}
+
+2751
+
+import java.io.InputStreamReader;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+ 
+ 
+public class Main {
+	public static void main(String[] args) throws IOException {
+        
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        StringBuilder sb = new StringBuilder();
+
+        int N = Integer.parseInt(br.readLine());
+
+        ArrayList<Integer> list = new ArrayList<>();
+
+        for(int i =0; i< N; i++){
+            list.add(Integer.parseInt(br.readLine()));
+        }
+
+        Collections.sort(list);
+
+        for(int value : list){
+            sb.append(value).append('\n');
+        }
+        System.out.println(sb);
+    }
+}
+
+10989
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.IOException;
+import java.util.Arrays;
+
+public class Main {
+	public static void main(String[] args) throws IOException {
+    
+		BufferedReader br=new BufferedReader(new InputStreamReader(System.in));
+		StringBuilder sb = new StringBuilder();
+        
+		int N = Integer.parseInt(br.readLine());
+		int[] arr = new int[N];
+        
+		for(int i = 0; i < N; i++){
+			arr[i] = Integer.parseInt(br.readLine());
+		}
+        
+		Arrays.sort(arr);
+        
+		for(int i = 0; i < N; i++){
+			sb.append(arr[i]).append('\n');
+		}
+ 
+		System.out.println(sb);
+	}
+}
+
+1427
+/*
+Scanner + 수학 연산 + 카운팅 정렬
+*/
+ 
+import java.util.Scanner;
+ 
+public class Main {
+	public static void main(String[] args) {
+
+        Scanner in = new Scanner(System.in);
+
+        int counting[] = new int[10];
+
+        int N = in.nextInt();
+
+        While (N != 0){
+            counting[N % 10]++;
+            N /= 10;
+        }
+        for(int i = 9; i>=0; i--){
+            while (counting[i]-- > 0){
+                System.out.print(i);
+            }
+        }
+    }
+}
+
+import java.util.Scanner;
+import java.util.Arrays;
+ 
+public class Main {
+	public static void main(String[] args) {
+
+        Scanner in = new Scanner(System.in);
+
+        char arr[] = in.nextLine().toCharArray();
+
+        Arrays.sort(arr);
+
+        for (int i = arr.length - 1; i>= 0; i--){
+            System.out.print(arr[i]);
+        }
+    }
+}
+
+11650
+import java.util.Scanner;
+import java.util.Arrays;
+ 
+public class Main {
+	public static void main(String[] args) {
+
+        Scanner in = new Scanner(System.in);
+
+        int N = in.nextInt();
+
+        int arr[][] = new int[N][2];
+
+        for(int i = 0; i< N; i++){
+            arr[i][0] = in.nextInt();
+            arr[i][1] = in.nextInt();
+        }
+
+        Arrays.sort(arr, (e1, e2) -> {
+            if(e1[0] == e2[0]){
+                return e1[1] - e2[1];
+            } else {
+                return e1[0] - e2[0];
+            }
+        });
+
+        StringBuilder sb = new StringBuilder();
+        for(int i=0; i < N; i++){
+            sb.append(arr[i][0] + " " + arr[i][1]).append('\n');
+        }
+        System.out.println(sb);
+    }
+}
+
+11651
+
+1181
+import java.util.Scanner;
+import java.util.Arrays;
+import java.util.Comparator;
+ 
+ 
+public class Main {
+	public static void main(String[] args) {
+
+        Scanner in = new Scanner(System.in);
+
+        int N = in.nextInt();
+        String arr[] = new String[n];
+
+        in.nextLine(); //개행 버림
+
+        for(int i = 0; i<N; i++){
+            arr[i] = in.nextLine();
+        }
+
+        Arrays.sort(arr, new Comparator<String>(){
+            public int compare(String s1, String s2){
+                //단어 길이가 같을경우
+                if(s1.length() == s2.length()) {
+                    return s1.compareTo(s2);
+                }
+                else {
+                    retrun s1.length() - s2.length();
+                }
+            }
+        });
+
+        System.out.println(arr[0]);
+
+        for(int i=1; i<N; i++){
+            //중복되지 않는 단어만 출력
+            if(!arr[i].equals(arr[i - 1])){
+                System.out.println(arr[i]);
+            }
+        }
+
+
+    }
+}
+
+10814
+import java.util.Scanner;
+import java.util.Arrays;
+import java.util.Comparator;
+ 
+public class Main {
+	public static void main(String[] args) {
+
+        Scanner in = new Scanner(System.in);
+
+        int N = in.nextInt();
+        String arr[][] = new String[N][2];
+
+        for(int i=0; i<N; i++){
+            arr[i][0] = in.next(); //나이
+            arr[i][1] = in.next(); // 이름
+        }
+
+        Arrays.sort(arr, new Comparator<String[]>(){
+            //나이순으로 정렬
+            @Override
+            public int compare(String[] s1, String[] s2){
+                return Integer.parseInt(s1[0]) - Integer.parseInt(s2[0]);
+            }
+        });
+
+        for(int i = 0; i < N; i++) {
+            System.out.println(arr[i][0]+ " " + arr[i][1]);
+        }
+
+    }
+}
+
+18870
+import java.util.Scanner;
+import java.util.HashMap;
+import java.util.Arrays;
+ 
+ 
+public class Main {
+ 
+	public static void main(String[] args) {
+		
+		Scanner in = new Scanner(System.in);
+		
+		int N = in.nextInt();
+
+        int origin[] = new int[N]; //원본배열
+        int sorted[] = new int[N]; //정렬할 배영
+
+        HashMap<Integer, Integer> rankingMap = new HashMap<Integer, Integer>();
+
+        for(int i=0; i< N; i++){
+            //정렬할 배열과 원본 배열에 값을 넣어준다
+            sorted[i] = origin[i] = in.nextInt();
+        }
+
+        //정렬 할 배열에 대해 정렬을 수행해준다
+        Arrays.sort(sorted);
+
+        // 정렬 된 배열을 순회하면서 map에 넣어준다.
+        int rank = 0;
+        for(int v : sorted) {
+            /*
+			 *  이 때 만약 앞선 원소가 이미 순위가 매겨졌다면
+			 *  중복되면 안되므로, 원소가 중복되지 않을 때만
+			 *  map에 원소와 그에 대응되는 순위를 넣어준다.
+			 */
+            if(!rankingMap.containsKey(v)){
+                rankingMap.put(v, rank);
+                rank++;
+            }
+        }
+
+        StringBuilder sb = new StringBuilder();
+        for(int key : origin){
+            int ranking = rankingMap.get(key);
+            sb.append(ranking).append(' ');
+        }
+        System.out.println(sb);
+    }
+}
+<<<<<<< HEAD
+
+<<<<<<< HEAD
+
+=======
+=======
+>>>>>>> d2d3014faa2f94cfb095dbf37e1eb4294d36cd6c
+10815
+import java.io.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.StringTokenizer;
+
+public class Main {
+    static int N, M; // 다른함수에도 쓰기 위해
+    static int NArray[]; //다른 함수에서 사근이의 카드 요소를 체크해서 비교해야 함
+
+    public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(System.out));
+        
+        N = Integer.parseInt(br.readLine()); //상근이의 카드 개수
+
+        NArray = new int[N];
+
+        StringTokenizer st = new StringTokenizer(br.readLine());
+
+        for(int i = 0; i < N; i++){
+            NArray[i] = Integer.parseInt(st.nextToken());
+        }
+
+        Arrays.sort(NArray); // 상근이의 카드에 있는 요소를 체크해야 하므로 정렬(이진탐색을위해)
+
+        M = Integer.parseInt(br.reaLine());
+
+        st = new StringTokenizer(br.readLine());
+
+        for(int i=0; i < M; i++) {
+            //해당 비교 배열 요소들을 저장하지 않아도 됨,우리가 필요한것은 1과 0으로된 문자열이니까
+            int num = Integer.parseInt(st.nextToken());
+
+            bw.write(BinarySearch(num) + " ");
+
+        }
+        br.close();
+        bw.fluse();
+        bw.close();
+    }
+    
+    public static int BinarySearch(int num) { //이진/이분 탐색 => 요소를 하나씩 넣어서 비교한다.
+        int left = 0; //인덱스 : 배열의 요소는 0 부터 시작
+        int right = N - 1; //인덱스 : 배열의 요소는 0 부터 시작하므로 N - 1을 해준다.
+        
+        while(left <= right){ //left가 right보다 큰 경우는 이진 탐색에 규칙에 어긋나므로 반복문을 돌리지 X
+            int middle = (left + rigth)/2;
+            int middleValue = NArray[middle];
+
+            if(num > middleValue){ //만약 num이 중간값보다 크면
+                left = middle + 1;
+            } else if (num < middleValue){ //만약 num이 중간값보다 작으면
+                right = middle - 1;
+            } else {
+                return 1; //찾았을경우(middleValue == num)일 경우
+            }
+            return 0; //상근이의 카드에 num이 없을 경우
+        }
+    }
+
+<<<<<<< HEAD
+=======
+}
+>>>>>>> origin/stduy
+10814
+import java.util.Scanner;
+import java.util.Arrays;
+import java.util.Comparator;
+ 
+public class Main {
+	public static void main(String[] args) {	
+        Scanner in = new Scanner(System.in);
+
+        int N = in.nextInt();
+        String arr[][] = new String[N][2];
+
+        for(int i=0; i< N; i++){
+            arr[i][0] = in.next(); //나이
+            arr[i][1] = in.next(); //이름
+        }
+
+        Arrays.sort(arr, new Comparator<String[]>(){
+            //나이순으로
+            @Override
+            public int compare(String s1[], String s2[]){
+                return Integer.parseInt(s1[0]) - Integer.parseInt(s2[0]);
+            }
+        });
+
+        for(int i=0; i< N; i++){
+            System.out.println(arr[i][0] + " " + arr[i][1]);
+        }
+    }
+<<<<<<< HEAD
+}
+
+1181
+import java.util.Scanner;
+import java.util.Arrays;
+import java.util.Comparator;
+public class Main {
+	public static void main(String[] args) {
+    
+		Scanner in = new Scanner(System.in);
+ 
+		int N = in.nextInt();
+		String[] arr = new String[N];
+ 
+		in.nextLine();	// 개행 버림
+ 
+		for (int i = 0; i < N; i++) {
+			arr[i] = in.nextLine();
+		}
+		
+		Arrays.sort(arr, new Comparator<String>() {
+			public int compare(String s1, String s2) {
+				// 단어 길이가 같을 경우 
+				if (s1.length() == s2.length()) {
+					return s1.compareTo(s2);
+				} 
+				// 그 외의 경우 
+				else {
+					return s1.length() - s2.length();
+				}
+			}
+		});
+ 
+ 
+		StringBuilder sb = new StringBuilder();
+ 
+		sb.append(arr[0]).append('\n');
+		
+		for (int i = 1; i < N; i++) {
+			// 중복되지 않는 단어만 출력
+			if (!arr[i].equals(arr[i - 1])) {
+				sb.append(arr[i]).append('\n');
+			}
+		}
+		System.out.println(sb);
+	}
+ 
+=======
+>>>>>>> origin/stduy
+>>>>>>> d2d3014faa2f94cfb095dbf37e1eb4294d36cd6c
+}

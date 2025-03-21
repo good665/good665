@@ -1,0 +1,19 @@
+# version: '3.8'
+# services:
+#   redis:
+#     image: redis:latest
+#     ports:
+#       - "6379:6379"
+      
+#   rabbitmq:
+#     container_name: 'guide-rabbit'
+#     image: 'rabbitmq:latest'
+#     environment:
+#       - 'RABBITMQ_DEFAULT_PASS=secret'
+#       - 'RABBITMQ_DEFAULT_USER=myuser'
+#     ports:
+#       - '5672:5672'
+spring:
+  docker:
+    compose:
+      enabled: false
