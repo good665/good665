@@ -1,18 +1,20 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useColorScheme } from 'react-native';
+import { Slot } from "expo-router"; // Expo Router 사용 시
+import { useEffect, useState } from "react";
+import { View } from "react-native";
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import AppTabs from '@/components/app-tabs';
+export default function RootLayout() {
+  const [isReady, setIsReady] = useState(false);
 
-SplashScreen.preventAutoHideAsync();
+  useEffect(() => {
+    // 핸드폰 자바스크립트 엔진이 완전히 준비되었을 때 true로 변경
+    setIsReady(true);
+  }, []);
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
-  return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
-      <AppTabs />
-    </ThemeProvider>
-  );
+  // 준비가 안 되었을 때는 빈 화면을 보여주어 eval() 에러를 방어함
+  if (!isReady) {
+    return <View style={{ flex: 1, backgroundColor: "#fff" }} />;
+  }
+
+  // 준비가 끝나면 그제야 실제 앱 화면들을 로드
+  return <Slot />;
 }
