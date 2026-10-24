@@ -116,6 +116,19 @@ export default function HomeScreen() {
               부모님을 위한 돌봄 시설을 찾아보세요.
             </Text>
 
+            <TouchableOpacity
+              style={styles.consultationButton}
+              activeOpacity={0.8}
+              onPress={() => router.push("/consultations")}
+            >
+              <Text style={styles.consultationButtonText}>
+                내 상담 신청 확인하기 →
+              </Text>
+              <Text style={styles.consultationButtonSubtext}>
+                신청한 상담 일정과 진행 상태를 확인하세요.
+              </Text>
+            </TouchableOpacity>
+
             <TextInput
               style={styles.search}
               placeholder="시설명 또는 지역 검색"
@@ -159,9 +172,7 @@ export default function HomeScreen() {
             style={styles.card}
             activeOpacity={0.7}
             onPress={() => {
-              console.log("시설 카드 클릭됨:", item.id);
-
-              router.push("/facilities/1");
+              router.push(`/facilities/${item.id}`);
             }}
           >
             <Text style={styles.facilityType}>
@@ -226,6 +237,27 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 22,
   },
+
+  consultationButton: {
+    backgroundColor: "#347454",
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+    borderRadius: 14,
+    marginBottom: 24,
+  },
+
+  consultationButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+
+  consultationButtonSubtext: {
+    color: "#E5F0E8",
+    fontSize: 12,
+    marginTop: 6,
+  },
+
   search: {
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
