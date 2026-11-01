@@ -40,6 +40,7 @@ export default function AdminLayout() {
       <Stack.Screen name="organizations/new" options={{ title: "운영 기관 등록" }} />
       <Stack.Screen name="reservations/index" options={{ title: "방문 예약 관리" }} />
       <Stack.Screen name="consultations/index" options={{ title: "상담 관리" }} />
+      <Stack.Screen name="subscriptions/index" options={{ title: "매출·구독 현황" }} />
     </Stack>
   );
 }

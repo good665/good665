@@ -21,6 +21,11 @@ const menuItems = [
     description: "전체 상담 신청 조회 및 상태 변경",
     path: "/admin/consultations" as Href,
   },
+  {
+    title: "매출·구독 현황",
+    description: "상단 노출 매출, 노출 중인 시설, 최근 결제·실패 내역",
+    path: "/admin/subscriptions" as Href,
+  },
 ];
 
 export default function AdminHomeScreen() {
