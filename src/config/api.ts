@@ -1,9 +1,10 @@
 import { Platform } from "react-native";
 
-// 실제 휴대폰에서 테스트할 때는 10.0.2.2 대신 컴퓨터의 로컬 IP(예: http://192.168.0.10:8080)로 바꾸세요.
-// 운영 배포 시에는 https 주소를 사용해야 합니다.
+// EAS 빌드는 eas.json 의 EXPO_PUBLIC_API_BASE_URL 을 씀 (실기기 = PC 의 와이파이 IP, 운영 = https 서버 주소).
+// 값이 없으면 개발용 기본값: 웹은 localhost, 안드로이드 에뮬레이터는 PC 를 가리키는 10.0.2.2
 export const API_BASE_URL =
-  Platform.OS === "web" ? "http://localhost:8080" : "http://10.0.2.2:8080";
+  process.env.EXPO_PUBLIC_API_BASE_URL ||
+  (Platform.OS === "web" ? "http://localhost:8080" : "http://10.0.2.2:8080");
 
 export const FACILITY_TYPE_LABELS: Record<string, string> = {
   SILVER_TOWN: "실버타운",
