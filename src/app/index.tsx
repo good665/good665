@@ -71,17 +71,18 @@ export default function HomeScreen() {
   const [selectedType, setSelectedType] = useState("ALL");
 
   const [page, setPage] = useState(0);
-  const [hasNext, setHasNext] = useState(false);
+  const [totalPages, setTotalPages] = useState(0);
   const [total, setTotal] = useState(0);
 
   const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
+  const [pageLoading, setPageLoading] = useState(false); // 페이지 번호를 눌러 다른 페이지를 불러오는 중
+  const listRef = useRef<FlatList<Facility>>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
 
   // 응답이 뒤섞여 도착해도 "가장 최근 요청"의 결과만 반영하기 위한 번호표
   const requestId = useRef(0);
-  // 광고 시설끼리의 무작위 순서 — 새로 검색할 때마다 바꾸고, 다음 페이지에는 같은 값을 보내 중복/누락을 막음
+  // 광고 시설끼리의 무작위 순서 — 새로 검색할 때마다 바꾸고, 다른 페이지에는 같은 값을 보내 중복/누락을 막음
   const shuffleSeed = useRef(0);
 
   // 검색어 입력이 멈추고 0.4초 뒤에 서버에 요청
@@ -91,9 +92,9 @@ export default function HomeScreen() {
   }, [keyword]);
 
   const fetchPage = useCallback(
-    async (pageToLoad: number, append: boolean) => {
+    async (pageToLoad: number, newSearch: boolean) => {
       const myId = ++requestId.current;
-      if (!append) shuffleSeed.current = Math.floor(Math.random() * 1_000_000_000);
+      if (newSearch) shuffleSeed.current = Math.floor(Math.random() * 1_000_000_000);
 
       try {
         setError("");
@@ -113,15 +114,15 @@ export default function HomeScreen() {
 
         if (myId !== requestId.current) return;
 
-        setFacilities((prev) => (append ? [...prev, ...data.items] : data.items));
+        setFacilities(data.items);
         setPage(data.page);
-        setHasNext(data.hasNext);
+        setTotalPages(data.totalPages);
         setTotal(data.totalElements);
+        if (!newSearch) listRef.current?.scrollToOffset({ offset: 0, animated: false });
       } catch (e) {
         if (myId !== requestId.current) return;
 
-        if (!append) setFacilities([]);
-        setHasNext(false);
+        if (newSearch) setFacilities([]);
         setError(
           e instanceof ApiError
             ? e.message
@@ -130,7 +131,7 @@ export default function HomeScreen() {
       } finally {
         if (myId === requestId.current) {
           setLoading(false);
-          setLoadingMore(false);
+          setPageLoading(false);
           setRefreshing(false);
         }
       }
@@ -141,30 +142,36 @@ export default function HomeScreen() {
   // 카테고리/검색어가 바뀌면 첫 페이지부터 다시 조회
   useEffect(() => {
     setLoading(true);
-    fetchPage(0, false);
+    fetchPage(0, true);
   }, [fetchPage]);
 
-  const loadMore = () => {
-    if (loading || loadingMore || refreshing || !hasNext || error) return;
+  const goToPage = (target: number) => {
+    if (loading || pageLoading || target === page || target < 0 || target >= totalPages) return;
 
-    setLoadingMore(true);
-    fetchPage(page + 1, true);
+    setPageLoading(true);
+    fetchPage(target, false);
   };
+
+  // 현재 페이지 주변으로 최대 5개 번호만 표시 (예: 3 4 [5] 6 7)
+  const pageStart = Math.max(0, Math.min(page - 2, totalPages - 5));
+  const pageNumbers = Array.from(
+    { length: Math.min(5, totalPages) },
+    (_, i) => pageStart + i,
+  );
 
   return (
     <SafeAreaView style={styles.container}>
       <FlatList
+        ref={listRef}
         data={facilities}
         keyExtractor={(item) => String(item.id)}
         contentContainerStyle={styles.listContent}
-        onEndReached={loadMore}
-        onEndReachedThreshold={0.5}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={() => {
               setRefreshing(true);
-              fetchPage(0, false);
+              fetchPage(0, true);
             }}
           />
         }
@@ -317,13 +324,52 @@ export default function HomeScreen() {
           )
         }
         ListFooterComponent={
-          loadingMore ? (
-            <ActivityIndicator color="#347454" style={styles.message} />
-          ) : (
+          <View>
+            {totalPages > 1 && !loading && (
+              <View style={styles.pager}>
+                <TouchableOpacity
+                  style={styles.pageArrow}
+                  disabled={page === 0 || pageLoading}
+                  onPress={() => goToPage(page - 1)}
+                  accessibilityLabel="이전 페이지"
+                >
+                  <Text style={[styles.pageArrowText, page === 0 && styles.pageDisabled]}>‹ 이전</Text>
+                </TouchableOpacity>
+
+                {pageNumbers.map((n) => (
+                  <TouchableOpacity
+                    key={n}
+                    style={[styles.pageButton, n === page && styles.pageButtonActive]}
+                    disabled={pageLoading}
+                    onPress={() => goToPage(n)}
+                    accessibilityLabel={`${n + 1}페이지`}
+                  >
+                    <Text style={[styles.pageText, n === page && styles.pageTextActive]}>{n + 1}</Text>
+                  </TouchableOpacity>
+                ))}
+
+                <TouchableOpacity
+                  style={styles.pageArrow}
+                  disabled={page >= totalPages - 1 || pageLoading}
+                  onPress={() => goToPage(page + 1)}
+                  accessibilityLabel="다음 페이지"
+                >
+                  <Text style={[styles.pageArrowText, page >= totalPages - 1 && styles.pageDisabled]}>
+                    다음 ›
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+            {pageLoading && <ActivityIndicator color="#347454" />}
+            {totalPages > 1 && !loading && (
+              <Text style={styles.pageInfo}>
+                {page + 1} / {totalPages.toLocaleString("ko-KR")} 페이지
+              </Text>
+            )}
             <Text style={styles.notice}>
               시설 정보와 이용료는 실제 기관에 확인해 주시기 바랍니다.
             </Text>
-          )
+          </View>
         }
       />
     </SafeAreaView>
@@ -334,6 +380,56 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F7F8F5",
+  },
+  pager: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 6,
+    marginTop: 8,
+  },
+  pageButton: {
+    minWidth: 36,
+    height: 36,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#D9DED8",
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 8,
+  },
+  pageButtonActive: {
+    backgroundColor: "#347454",
+    borderColor: "#347454",
+  },
+  pageText: {
+    fontSize: 14,
+    color: "#26352D",
+    fontWeight: "600",
+  },
+  pageTextActive: {
+    color: "#FFFFFF",
+  },
+  pageArrow: {
+    height: 36,
+    paddingHorizontal: 8,
+    justifyContent: "center",
+  },
+  pageArrowText: {
+    fontSize: 14,
+    color: "#347454",
+    fontWeight: "600",
+  },
+  pageDisabled: {
+    color: "#BBBBBB",
+  },
+  pageInfo: {
+    textAlign: "center",
+    fontSize: 12,
+    color: "#888",
+    marginTop: 8,
   },
   listContent: {
     padding: 20,

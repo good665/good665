@@ -41,6 +41,7 @@ export default function AdminLayout() {
       <Stack.Screen name="reservations/index" options={{ title: "방문 예약 관리" }} />
       <Stack.Screen name="consultations/index" options={{ title: "상담 관리" }} />
       <Stack.Screen name="subscriptions/index" options={{ title: "매출·구독 현황" }} />
+      <Stack.Screen name="public-data/index" options={{ title: "공공데이터 시설 가져오기" }} />
     </Stack>
   );
 }

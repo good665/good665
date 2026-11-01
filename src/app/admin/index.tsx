@@ -26,6 +26,11 @@ const menuItems = [
     description: "상단 노출 매출, 노출 중인 시설, 최근 결제·실패 내역",
     path: "/admin/subscriptions" as Href,
   },
+  {
+    title: "공공데이터 시설 가져오기",
+    description: "국민건강보험공단 장기요양기관(서울·경기)을 시설로 등록",
+    path: "/admin/public-data" as Href,
+  },
 ];
 
 export default function AdminHomeScreen() {
