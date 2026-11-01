@@ -1,0 +1,326 @@
+import { Stack, useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Platform,
+  Pressable,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+
+import { ApiError, apiFetch } from "@/lib/api";
+
+type Reservation = {
+  id: number;
+  facilityId: number;
+  facilityName: string;
+  scheduledAt: string;
+  message: string | null;
+  status: string;
+  createdAt: string;
+};
+
+export default function MyReservationsScreen() {
+  const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState("");
+  const router = useRouter();
+
+  // 백엔드 API를 호출해 내 방문 예약 내역을 가져옴 (사용자는 토큰으로 식별)
+  const fetchReservations = async () => {
+    try {
+      setError("");
+
+      const data = await apiFetch<Reservation[]>("/api/reservations/my");
+      setReservations(data);
+    } catch (e) {
+      console.error("방문 예약 목록 조회 오류:", e);
+      setError(
+        e instanceof ApiError
+          ? e.message
+          : "방문 예약 목록을 불러오지 못했습니다. 서버 실행 상태와 API 주소를 확인해 주세요.",
+      );
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  // 들어올 때마다 목록을 다시 조회
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      fetchReservations();
+    }, []),
+  );
+
+  const formatDate = (date: string) => {
+    if (!date) return "-";
+    return date.replace("T", " ").slice(0, 16);
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "REQUESTED":
+        return "신청 완료";
+      case "CONFIRMED":
+        return "방문 확정";
+      case "COMPLETED":
+        return "방문 완료";
+      case "CANCELED":
+        return "취소됨";
+      default:
+        return status || "상태 미확인";
+    }
+  };
+
+  const cancelReservation = async (reservationId: number) => {
+    try {
+      // 1. 백엔드에 PATCH 요청 (실패하면 ApiError 가 발생해 아래 catch 로 이동)
+      await apiFetch(`/api/reservations/${reservationId}/cancel`, {
+        method: "PATCH",
+      });
+
+      if (Platform.OS === "web") {
+        // 2. 성공하면 취소 완료 메시지를 표시
+        window.alert("방문 예약이 취소되었습니다.");
+      } else {
+        Alert.alert("취소 완료", "방문 예약이 취소되었습니다.");
+      }
+
+      await fetchReservations(); // 3. 방문 예약 목록을 다시 조회
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "방문 예약 취소 중 오류가 발생했습니다.";
+
+      if (Platform.OS === "web") {
+        window.alert(message);
+      } else {
+        Alert.alert("취소 실패", message);
+      }
+    }
+  };
+
+  const confirmCancel = (reservationId: number) => {
+    if (Platform.OS === "web") {
+      const confirmed = window.confirm("이 방문 예약을 취소하시겠습니까?");
+
+      if (confirmed) {
+        cancelReservation(reservationId);
+      }
+
+      return;
+    }
+
+    Alert.alert("방문 예약 취소", "이 방문 예약을 취소하시겠습니까?", [
+      {
+        text: "아니요",
+        style: "cancel",
+      },
+      {
+        text: "취소하기",
+        style: "destructive",
+        onPress: () => cancelReservation(reservationId),
+      },
+    ]);
+  };
+
+  return (
+    <View style={styles.container}>
+      <Stack.Screen options={{ title: "내 방문 예약", headerShown: true }} />
+
+      <Text style={styles.title}>내 방문 예약</Text>
+      <Text style={styles.subtitle}>
+        신청한 시니어 시설 방문 예약 내역을 확인할 수 있어요.
+      </Text>
+
+      {loading ? (
+        <ActivityIndicator size="large" style={styles.loader} />
+      ) : error ? (
+        <View style={styles.center}>
+          <Text style={styles.error}>{error}</Text>
+          <Text style={styles.retry} onPress={fetchReservations}>
+            다시 시도하기
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={reservations}
+          keyExtractor={(item) => String(item.id)}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => {
+                setRefreshing(true);
+                fetchReservations();
+              }}
+            />
+          }
+          contentContainerStyle={
+            reservations.length === 0 ? styles.emptyContainer : styles.list
+          }
+          ListEmptyComponent={
+            <Text style={styles.emptyText}>아직 신청한 방문 예약이 없습니다.</Text>
+          }
+          renderItem={({ item }) => (
+            <View style={styles.card}>
+              <Pressable
+                onPress={() => router.push(`/facilities/${item.facilityId}`)}
+              >
+                <Text style={styles.facilityName}>{item.facilityName} →</Text>
+              </Pressable>
+
+              <View style={styles.statusBadge}>
+                <Text style={styles.statusText}>
+                  {getStatusText(item.status)}
+                </Text>
+              </View>
+
+              <Text style={styles.label}>희망 방문 일시</Text>
+              <Text style={styles.value}>{formatDate(item.scheduledAt)}</Text>
+
+              {item.message ? (
+                <>
+                  <Text style={styles.label}>요청 사항</Text>
+                  <Text style={styles.value}>{item.message}</Text>
+                </>
+              ) : null}
+
+              <Text style={styles.createdAt}>
+                신청일: {formatDate(item.createdAt)}
+              </Text>
+
+              {["REQUESTED", "CONFIRMED"].includes(item.status) && (
+                <Pressable
+                  style={styles.cancelButton}
+                  onPress={() => confirmCancel(item.id)}
+                >
+                  <Text style={styles.cancelButtonText}>예약 취소</Text>
+                </Pressable>
+              )}
+            </View>
+          )}
+        />
+      )}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#F7F8FA",
+    padding: 20,
+  },
+  title: {
+    fontSize: 25,
+    fontWeight: "bold",
+    marginTop: 10,
+    marginBottom: 8,
+    color: "#222222",
+  },
+  subtitle: {
+    fontSize: 14,
+    color: "#666666",
+    marginBottom: 20,
+  },
+  loader: {
+    marginTop: 40,
+  },
+  list: {
+    paddingBottom: 30,
+  },
+  card: {
+    backgroundColor: "#FFFFFF",
+    padding: 18,
+    borderRadius: 14,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: "#E8E8E8",
+  },
+  facilityName: {
+    fontSize: 19,
+    fontWeight: "bold",
+    color: "#222222",
+    marginBottom: 12,
+    paddingRight: 8,
+  },
+  statusBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: "#E5F3EA",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    marginBottom: 14,
+  },
+  statusText: {
+    color: "#267347",
+    fontSize: 13,
+    fontWeight: "bold",
+  },
+  label: {
+    color: "#777777",
+    fontSize: 12,
+    marginTop: 10,
+    marginBottom: 4,
+  },
+  value: {
+    color: "#333333",
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  createdAt: {
+    color: "#999999",
+    fontSize: 12,
+    marginTop: 16,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#EEEEEE",
+  },
+  center: {
+    alignItems: "center",
+    marginTop: 40,
+    paddingHorizontal: 10,
+  },
+  error: {
+    color: "#C62828",
+    textAlign: "center",
+    lineHeight: 22,
+  },
+  retry: {
+    color: "#2367D1",
+    fontWeight: "bold",
+    marginTop: 16,
+    padding: 8,
+  },
+  emptyContainer: {
+    flexGrow: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  emptyText: {
+    color: "#777777",
+    fontSize: 15,
+    textAlign: "center",
+  },
+  cancelButton: {
+    marginTop: 14,
+    paddingVertical: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#D9534F",
+    alignItems: "center",
+  },
+  cancelButtonText: {
+    color: "#C62828",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+});

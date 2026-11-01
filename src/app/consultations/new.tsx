@@ -2,8 +2,6 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -12,9 +10,8 @@ import {
   View,
 } from "react-native";
 
-import { API_BASE_URL, USER_ID } from "@/config/api";
-
-const API_URL = `${API_BASE_URL}/api/consultations`;
+import { alertMessage } from "@/lib/alert";
+import { apiFetch } from "@/lib/api";
 
 // 기본 희망 날짜: 내일
 function getTomorrow() {
@@ -44,12 +41,12 @@ export default function NewConsultationScreen() {
     const parsedFacilityId = Number(facilityId);
 
     if (!Number.isInteger(parsedFacilityId) || parsedFacilityId <= 0) {
-      Alert.alert("오류", "시설 정보가 올바르지 않습니다.");
+      alertMessage("오류", "시설 정보가 올바르지 않습니다.");
       return;
     }
 
     if (!date.trim() || !time.trim()) {
-      Alert.alert("입력 확인", "희망 날짜와 시간을 입력해 주세요.");
+      alertMessage("입력 확인", "희망 날짜와 시간을 입력해 주세요.");
       return;
     }
 
@@ -57,7 +54,7 @@ export default function NewConsultationScreen() {
     const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
 
     if (!dateMatch) {
-      Alert.alert(
+      alertMessage(
         "날짜 형식 확인",
         "날짜를 YYYY-MM-DD 형식으로 입력해 주세요.",
       );
@@ -75,7 +72,7 @@ export default function NewConsultationScreen() {
       selectedDate.getMonth() !== month - 1 ||
       selectedDate.getDate() !== day
     ) {
-      Alert.alert("날짜 확인", "실제로 존재하는 날짜를 입력해 주세요.");
+      alertMessage("날짜 확인", "실제로 존재하는 날짜를 입력해 주세요.");
       return;
     }
 
@@ -83,7 +80,7 @@ export default function NewConsultationScreen() {
     const timeMatch = /^(\d{2}):(\d{2})$/.exec(time);
 
     if (!timeMatch) {
-      Alert.alert("시간 형식 확인", "시간을 HH:mm 형식으로 입력해 주세요.");
+      alertMessage("시간 형식 확인", "시간을 HH:mm 형식으로 입력해 주세요.");
       return;
     }
 
@@ -91,7 +88,7 @@ export default function NewConsultationScreen() {
     const minute = Number(timeMatch[2]);
 
     if (hour > 23 || minute > 59) {
-      Alert.alert("시간 확인", "올바른 시간을 입력해 주세요.");
+      alertMessage("시간 확인", "올바른 시간을 입력해 주세요.");
       return;
     }
 
@@ -101,7 +98,7 @@ export default function NewConsultationScreen() {
     const selectedDateTime = new Date(year, month - 1, day, hour, minute);
 
     if (selectedDateTime <= now) {
-      Alert.alert(
+      alertMessage(
         "상담 시간 확인",
         "현재 시각 이후의 날짜와 시간을 선택해 주세요.",
       );
@@ -113,25 +110,16 @@ export default function NewConsultationScreen() {
     setLoading(true);
 
     try {
-      const response = await fetch(API_URL, {
+      // userId 는 보내지 않습니다. 서버가 토큰에서 꺼냅니다.
+      await apiFetch("/api/consultations", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({
-          userId: USER_ID,
           facilityId: parsedFacilityId,
           preferredAt,
           consultationMethod: method,
           message: message.trim(),
         }),
       });
-
-      const result = await response.json();
-
-      if (!response.ok || result.success !== true) {
-        throw new Error(result.message || "상담 신청에 실패했습니다.");
-      }
 
       router.replace({
         pathname: "/consultations/success",
@@ -145,11 +133,7 @@ export default function NewConsultationScreen() {
       const errorMessage =
         e instanceof Error ? e.message : "상담 신청 중 오류가 발생했습니다.";
 
-      if (Platform.OS === "web") {
-        window.alert(errorMessage);
-      } else {
-        Alert.alert("신청 실패", errorMessage);
-      }
+      alertMessage("신청 실패", errorMessage);
     } finally {
       setLoading(false);
     }

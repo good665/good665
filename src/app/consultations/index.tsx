@@ -1,16 +1,18 @@
 import { Stack, useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    FlatList,
-    Platform,
-    Pressable,
-    RefreshControl,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Platform,
+  Pressable,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
+
+import { ApiError, apiFetch } from "@/lib/api";
 
 type Consultation = {
   id: number;
@@ -23,43 +25,34 @@ type Consultation = {
   createdAt: string;
 };
 
-const API_BASE_URL =
-  Platform.OS === "web" ? "http://localhost:8080" : "http://10.0.2.2:8080";
-
-const USER_ID = 1;
-
 export default function MyConsultationsScreen() {
   const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
-  //백엔드 API를 호출해 상담 내역을 가져옴
+
+  // 백엔드 API를 호출해 내 상담 내역을 가져옴 (사용자는 토큰으로 식별)
   const fetchConsultations = async () => {
     try {
       setError("");
 
-      const response = await fetch(
-        `${API_BASE_URL}/api/consultations/my?userId=${USER_ID}`,
-      );
-
-      if (!response.ok) {
-        throw new Error(`서버 오류: ${response.status}`);
-      }
-
-      const data: Consultation[] = await response.json();
+      const data = await apiFetch<Consultation[]>("/api/consultations/my");
       setConsultations(data);
     } catch (e) {
       console.error("상담 목록 조회 오류:", e);
       setError(
-        "상담 목록을 불러오지 못했습니다. 서버 실행 상태와 API 주소를 확인해 주세요.",
+        e instanceof ApiError
+          ? e.message
+          : "상담 목록을 불러오지 못했습니다. 서버 실행 상태와 API 주소를 확인해 주세요.",
       );
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   };
-  //들어올 때마다 목록을 다시 조회
+
+  // 들어올 때마다 목록을 다시 조회
   useFocusEffect(
     useCallback(() => {
       setLoading(true);
@@ -102,29 +95,19 @@ export default function MyConsultationsScreen() {
 
   const cancelConsultation = async (consultationId: number) => {
     try {
-      const response = await fetch(
-        //1. 백엔드에 PATCH 요청을 보낸다.
-        `${API_BASE_URL}/api/consultations/${consultationId}/cancel?userId=${USER_ID}`,
-        {
-          method: "PATCH",
-        },
-      );
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        //2. 성공 여부를 확인
-        throw new Error(result.message || "상담 취소에 실패했습니다.");
-      }
+      // 1. 백엔드에 PATCH 요청 (실패하면 ApiError 가 발생해 아래 catch 로 이동)
+      await apiFetch(`/api/consultations/${consultationId}/cancel`, {
+        method: "PATCH",
+      });
 
       if (Platform.OS === "web") {
-        //3. 성공하면 취소 완료 메시지를 표시
+        // 2. 성공하면 취소 완료 메시지를 표시
         window.alert("상담 신청이 취소되었습니다.");
       } else {
         Alert.alert("취소 완료", "상담 신청이 취소되었습니다.");
       }
 
-      await fetchConsultations(); //4. 상담 목록을 다시 조회
+      await fetchConsultations(); // 3. 상담 목록을 다시 조회
     } catch (error) {
       const message =
         error instanceof Error
@@ -138,6 +121,7 @@ export default function MyConsultationsScreen() {
       }
     }
   };
+
   const confirmCancel = (consultationId: number) => {
     if (Platform.OS === "web") {
       const confirmed = window.confirm("이 상담 신청을 취소하시겠습니까?");
@@ -181,11 +165,11 @@ export default function MyConsultationsScreen() {
           </Text>
         </View>
       ) : (
-        <FlatList //상담 신청 내역을 목록으로 표시
+        <FlatList
           data={consultations}
           keyExtractor={(item) => String(item.id)}
           refreshControl={
-            <RefreshControl //화면을 아래로 당겨 목록을 새로고침
+            <RefreshControl
               refreshing={refreshing}
               onRefresh={() => {
                 setRefreshing(true);
@@ -199,7 +183,6 @@ export default function MyConsultationsScreen() {
           ListEmptyComponent={
             <Text style={styles.emptyText}>아직 신청한 상담이 없습니다.</Text>
           }
-          //getStatusText -> REQUESTED 같은 상태 코드를 한국어로 바꿔
           renderItem={({ item }) => (
             <View style={styles.card}>
               <Pressable
@@ -354,7 +337,6 @@ const styles = StyleSheet.create({
     borderColor: "#D9534F",
     alignItems: "center",
   },
-
   cancelButtonText: {
     color: "#C62828",
     fontSize: 14,

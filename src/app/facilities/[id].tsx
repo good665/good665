@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -9,9 +10,9 @@ import {
   View,
 } from "react-native";
 
-import { API_BASE_URL, getFacilityTypeName } from "@/config/api";
-
-const API_URL = `${API_BASE_URL}/api/facilities`;
+import { getFacilityTypeName, resolveImageUrl } from "@/config/api";
+import { useAuth } from "@/context/AuthContext";
+import { apiFetch } from "@/lib/api";
 
 type Facility = {
   id: number;
@@ -25,6 +26,7 @@ type Facility = {
   monthlyFeeMax: number | null;
   introduction: string | null;
   admissionConditions: string | null;
+  photos: string[] | null;
 };
 
 function formatPrice(price: number | null | undefined) {
@@ -37,6 +39,7 @@ function formatPrice(price: number | null | undefined) {
 
 export default function FacilityDetailScreen() {
   const router = useRouter();
+  const { user } = useAuth();
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const [facility, setFacility] = useState<Facility | null>(null);
@@ -65,17 +68,7 @@ export default function FacilityDetailScreen() {
         setLoading(true);
         setError("");
 
-        const response = await fetch(`${API_URL}/${facilityId}`);
-
-        if (response.status === 404) {
-          throw new Error("해당 시설을 찾을 수 없습니다.");
-        }
-
-        if (!response.ok) {
-          throw new Error("시설 정보를 불러오지 못했습니다.");
-        }
-
-        const found: Facility = await response.json();
+        const found = await apiFetch<Facility>(`/api/facilities/${facilityId}`);
 
         if (active) {
           setFacility(found);
@@ -107,8 +100,34 @@ export default function FacilityDetailScreen() {
       return;
     }
 
+    // 상담 신청은 로그인 필요
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+
     router.push({
       pathname: "/consultations/new",
+      params: {
+        facilityId: String(facility.id),
+        facilityName: facility.name,
+      },
+    });
+  }
+
+  function goToReservation() {
+    if (!facility) {
+      return;
+    }
+
+    // 방문 예약도 로그인 필요
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+
+    router.push({
+      pathname: "/reservations/new",
       params: {
         facilityId: String(facility.id),
         facilityName: facility.name,
@@ -146,10 +165,26 @@ export default function FacilityDetailScreen() {
           <Text style={styles.backText}>‹ 목록으로 돌아가기</Text>
         </Pressable>
 
+        {facility.photos && facility.photos.length > 0 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.gallery}
+            contentContainerStyle={styles.galleryContent}
+          >
+            {facility.photos.map((photo, index) => (
+              <Image
+                key={`${photo}-${index}`}
+                source={{ uri: resolveImageUrl(photo) }}
+                style={styles.galleryImage}
+                resizeMode="cover"
+              />
+            ))}
+          </ScrollView>
+        )}
+
         <View style={styles.hero}>
-          <Text style={styles.category}>
-            {getFacilityTypeName(facility.facilityType)}
-          </Text>
+          <Text style={styles.category}>{getFacilityTypeName(facility.facilityType)}</Text>
 
           <Text style={styles.title}>{facility.name}</Text>
 
@@ -197,8 +232,15 @@ export default function FacilityDetailScreen() {
       </ScrollView>
 
       <View style={styles.bottomBar}>
+        <Pressable
+          style={[styles.consultButton, styles.reserveButton]}
+          onPress={goToReservation}
+        >
+          <Text style={styles.reserveButtonText}>방문 예약하기</Text>
+        </Pressable>
+
         <Pressable style={styles.consultButton} onPress={goToConsultation}>
-          <Text style={styles.consultButtonText}>이 시설 상담 신청하기</Text>
+          <Text style={styles.consultButtonText}>상담 신청하기</Text>
         </Pressable>
       </View>
     </View>
@@ -249,6 +291,18 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: "#39765B",
     marginBottom: 20,
+  },
+  gallery: {
+    marginBottom: 18,
+  },
+  galleryContent: {
+    gap: 10,
+  },
+  galleryImage: {
+    width: 220,
+    height: 150,
+    borderRadius: 14,
+    backgroundColor: "#E8ECE7",
   },
   hero: {
     backgroundColor: "#E7F2EB",
@@ -316,12 +370,15 @@ const styles = StyleSheet.create({
     color: "#444",
   },
   bottomBar: {
+    flexDirection: "row",
+    gap: 10,
     padding: 16,
     backgroundColor: "#FFFFFF",
     borderTopWidth: 1,
     borderTopColor: "#E5E7EB",
   },
   consultButton: {
+    flex: 1,
     backgroundColor: "#39765B",
     paddingVertical: 16,
     borderRadius: 12,
@@ -329,6 +386,16 @@ const styles = StyleSheet.create({
   },
   consultButtonText: {
     color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  reserveButton: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1.5,
+    borderColor: "#39765B",
+  },
+  reserveButtonText: {
+    color: "#39765B",
     fontSize: 16,
     fontWeight: "700",
   },
