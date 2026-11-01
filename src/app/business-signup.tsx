@@ -90,7 +90,7 @@ export default function BusinessSignupScreen() {
         organizationPhone: organizationPhone.trim(),
         organizationEmail: organizationEmail.trim(),
       });
-      router.replace("/");
+      // 이동은 _layout.tsx AuthGate 가 처리 (보던 화면으로 돌아감)
     } catch (e) {
       setError(e instanceof Error ? e.message : "사업자 가입 중 오류가 발생했습니다.");
     } finally {

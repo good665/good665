@@ -101,7 +101,12 @@ function AuthGate() {
     if (!user && needsLogin) {
       router.replace("/login");
     } else if (user && inAuthScreen) {
-      router.replace("/");
+      // 로그인/가입 직후: 로그인 화면을 띄운 곳(예: 시설 상세)으로 돌아감, 없으면 홈
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace("/");
+      }
     }
   }, [user, loading, needsLogin, inAuthScreen]);
 

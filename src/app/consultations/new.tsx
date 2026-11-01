@@ -12,14 +12,7 @@ import {
 
 import { alertMessage } from "@/lib/alert";
 import { apiFetch } from "@/lib/api";
-
-// 기본 희망 날짜: 내일
-function getTomorrow() {
-  const d = new Date();
-  d.setDate(d.getDate() + 1);
-  const p = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-}
+import { checkFutureDateTime, getTomorrow } from "@/lib/datetime";
 
 type ConsultationMethod = "PHONE" | "VISIT";
 
@@ -45,63 +38,9 @@ export default function NewConsultationScreen() {
       return;
     }
 
-    if (!date.trim() || !time.trim()) {
-      alertMessage("입력 확인", "희망 날짜와 시간을 입력해 주세요.");
-      return;
-    }
-
-    // 날짜 형식 및 실제 존재하는 날짜인지 확인
-    const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
-
-    if (!dateMatch) {
-      alertMessage(
-        "날짜 형식 확인",
-        "날짜를 YYYY-MM-DD 형식으로 입력해 주세요.",
-      );
-      return;
-    }
-
-    const year = Number(dateMatch[1]);
-    const month = Number(dateMatch[2]);
-    const day = Number(dateMatch[3]);
-
-    const selectedDate = new Date(year, month - 1, day);
-
-    if (
-      selectedDate.getFullYear() !== year ||
-      selectedDate.getMonth() !== month - 1 ||
-      selectedDate.getDate() !== day
-    ) {
-      alertMessage("날짜 확인", "실제로 존재하는 날짜를 입력해 주세요.");
-      return;
-    }
-
-    // 시간 형식 및 범위 확인
-    const timeMatch = /^(\d{2}):(\d{2})$/.exec(time);
-
-    if (!timeMatch) {
-      alertMessage("시간 형식 확인", "시간을 HH:mm 형식으로 입력해 주세요.");
-      return;
-    }
-
-    const hour = Number(timeMatch[1]);
-    const minute = Number(timeMatch[2]);
-
-    if (hour > 23 || minute > 59) {
-      alertMessage("시간 확인", "올바른 시간을 입력해 주세요.");
-      return;
-    }
-
-    // 과거 날짜 및 시간 신청 방지
-    const now = new Date();
-
-    const selectedDateTime = new Date(year, month - 1, day, hour, minute);
-
-    if (selectedDateTime <= now) {
-      alertMessage(
-        "상담 시간 확인",
-        "현재 시각 이후의 날짜와 시간을 선택해 주세요.",
-      );
+    const invalid = checkFutureDateTime(date, time);
+    if (invalid) {
+      alertMessage(invalid[0], invalid[1]);
       return;
     }
 
