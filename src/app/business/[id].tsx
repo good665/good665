@@ -1,4 +1,5 @@
 import * as ImagePicker from "expo-image-picker";
+import * as WebBrowser from "expo-web-browser";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import {
@@ -14,7 +15,7 @@ import {
   View,
 } from "react-native";
 
-import { FACILITY_TYPE_LABELS, parseFee, resolveImageUrl } from "@/config/api";
+import { API_BASE_URL, FACILITY_TYPE_LABELS, parseFee, resolveImageUrl } from "@/config/api";
 import { apiFetch, apiUpload, imageFormData } from "@/lib/api";
 
 const facilityTypes = Object.entries(FACILITY_TYPE_LABELS);
@@ -46,6 +47,9 @@ type SubscriptionStatus = {
   autoRenew: boolean; // 기간이 끝나면 자동으로 다음 달 결제되는지
   premiumUntil: string | null; // 노출 마지막 날 (다음날 내려감)
   monthlyPrice: number;
+  cardRequired: boolean; // 실제 PG(토스) 모드면 결제 전에 카드 등록 필요
+  cardRegistered: boolean;
+  cardSummary: string | null; // 마스킹된 카드 번호
 };
 
 type SubscriptionPayment = {
@@ -112,6 +116,8 @@ export default function EditMyFacilityScreen() {
   const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
   const [payments, setPayments] = useState<SubscriptionPayment[]>([]);
   const [subscriptionBusy, setSubscriptionBusy] = useState(false);
+  // 카드 등록 창을 연 뒤 — 브라우저에서 돌아오면 사용자가 새로고침을 눌러 결과를 확인
+  const [cardPending, setCardPending] = useState(false);
 
   const loadFacility = useCallback(async () => {
     try {
@@ -315,6 +321,29 @@ export default function EditMyFacilityScreen() {
     }
   }
 
+  async function startCardRegistration() {
+    setSubscriptionBusy(true);
+
+    try {
+      const { registerUrl } = await apiFetch<{ registerUrl: string }>(
+        `/api/business/facilities/${facilityId}/subscription/card-registration`,
+        { method: "POST" },
+      );
+      setCardPending(true);
+      await WebBrowser.openBrowserAsync(API_BASE_URL + registerUrl);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "카드 등록을 시작하지 못했습니다.";
+      alertMessage("카드 등록 실패", message);
+    } finally {
+      setSubscriptionBusy(false);
+    }
+  }
+
+  async function finishCardRegistration() {
+    setCardPending(false);
+    await loadSubscription();
+  }
+
   function confirmSubscribe() {
     const price = formatWon(subscription?.monthlyPrice ?? 0);
     confirmAction(
@@ -344,6 +373,37 @@ export default function EditMyFacilityScreen() {
     }
 
     const price = formatWon(subscription.monthlyPrice);
+
+    // 실제 PG 모드에서 카드가 없으면 결제·자동 연장 대신 카드 등록부터
+    if (subscription.cardRequired && !subscription.cardRegistered) {
+      return (
+        <>
+          <Text style={styles.subscriptionText}>
+            {subscription.active
+              ? `${subscription.premiumUntil}까지 노출 중입니다. 자동 연장하려면`
+              : `월 ${price}으로 검색 결과 맨 위에 '광고' 표시와 함께 노출됩니다. 결제하려면`}{" "}
+            먼저 매월 자동 결제할 카드를 등록해 주세요. (토스페이먼츠)
+          </Text>
+          <Pressable
+            style={[styles.subscribeButton, subscriptionBusy && styles.disabledButton]}
+            onPress={startCardRegistration}
+            disabled={subscriptionBusy}
+          >
+            {subscriptionBusy ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={styles.submitButtonText}>결제 카드 등록</Text>
+            )}
+          </Pressable>
+          {cardPending && (
+            <Pressable style={styles.secondaryButton} onPress={finishCardRegistration}>
+              <Text style={styles.secondaryButtonText}>카드 등록을 마쳤어요 · 새로고침</Text>
+            </Pressable>
+          )}
+        </>
+      );
+    }
+
     let description: string;
     let buttonLabel: string;
     let onPress: () => void;
@@ -390,7 +450,21 @@ export default function EditMyFacilityScreen() {
           )}
         </Pressable>
 
-        <Text style={styles.helper}>현재는 모의 결제로 처리되어 실제 금액은 청구되지 않습니다.</Text>
+        {subscription.cardRequired ? (
+          <View style={styles.cardRow}>
+            <Text style={styles.helper}>결제 카드: {subscription.cardSummary ?? "등록됨"}</Text>
+            <Pressable onPress={startCardRegistration} disabled={subscriptionBusy}>
+              <Text style={styles.cardChangeText}>카드 변경</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <Text style={styles.helper}>현재는 모의 결제로 처리되어 실제 금액은 청구되지 않습니다.</Text>
+        )}
+        {cardPending && (
+          <Pressable style={styles.secondaryButton} onPress={finishCardRegistration}>
+            <Text style={styles.secondaryButtonText}>카드 변경을 마쳤어요 · 새로고침</Text>
+          </Pressable>
+        )}
 
         {payments.length > 0 && (
           <View style={styles.paymentList}>
@@ -631,6 +705,30 @@ const styles = StyleSheet.create({
     color: "#C62828",
     fontSize: 15,
     fontWeight: "700",
+  },
+  secondaryButton: {
+    borderWidth: 1,
+    borderColor: "#39765B",
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  secondaryButtonText: {
+    color: "#39765B",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  cardRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  cardChangeText: {
+    color: "#39765B",
+    fontSize: 12,
+    fontWeight: "700",
+    marginTop: 6,
   },
   paymentList: {
     marginTop: 14,
