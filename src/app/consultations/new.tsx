@@ -123,7 +123,9 @@ export default function NewConsultationScreen() {
         maxLength={5}
       />
 
-      <Text style={styles.helper}>입력 형식: 24시간제 HH:mm</Text>
+      <Text style={styles.helper}>
+        입력 형식: 24시간제 HH:mm (같은 시설·시간대는 상담 정원이 찰 수 있습니다)
+      </Text>
 
       <Text style={styles.label}>상담 방식</Text>
 
