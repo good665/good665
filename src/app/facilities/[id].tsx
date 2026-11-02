@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -27,6 +28,7 @@ type Facility = {
   introduction: string | null;
   admissionConditions: string | null;
   photos: string[] | null;
+  publicData?: boolean; // 공공데이터로 들여온 시설 — 받을 운영자가 없어 전화 문의만 가능
 };
 
 function formatPrice(price: number | null | undefined) {
@@ -189,7 +191,7 @@ export default function FacilityDetailScreen() {
           <Text style={styles.title}>{facility.name}</Text>
 
           <Text style={styles.organization}>
-            운영 기관: {facility.organizationName}
+            {facility.publicData ? "정보 출처" : "운영 기관"}: {facility.organizationName}
           </Text>
         </View>
 
@@ -232,16 +234,32 @@ export default function FacilityDetailScreen() {
       </ScrollView>
 
       <View style={styles.bottomBar}>
-        <Pressable
-          style={[styles.consultButton, styles.reserveButton]}
-          onPress={goToReservation}
-        >
-          <Text style={styles.reserveButtonText}>방문 예약하기</Text>
-        </Pressable>
+        {facility.publicData ? (
+          facility.phone ? (
+            <Pressable
+              style={styles.consultButton}
+              accessibilityRole="button"
+              onPress={() => Linking.openURL(`tel:${facility.phone}`)}
+            >
+              <Text style={styles.consultButtonText}>전화 걸기</Text>
+            </Pressable>
+          ) : (
+            <Text style={styles.noPhoneText}>등록된 전화번호가 없습니다.</Text>
+          )
+        ) : (
+          <>
+            <Pressable
+              style={[styles.consultButton, styles.reserveButton]}
+              onPress={goToReservation}
+            >
+              <Text style={styles.reserveButtonText}>방문 예약하기</Text>
+            </Pressable>
 
-        <Pressable style={styles.consultButton} onPress={goToConsultation}>
-          <Text style={styles.consultButtonText}>상담 신청하기</Text>
-        </Pressable>
+            <Pressable style={styles.consultButton} onPress={goToConsultation}>
+              <Text style={styles.consultButtonText}>상담 신청하기</Text>
+            </Pressable>
+          </>
+        )}
       </View>
     </View>
   );
@@ -376,6 +394,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderTopWidth: 1,
     borderTopColor: "#E5E7EB",
+  },
+  noPhoneText: {
+    flex: 1,
+    textAlign: "center",
+    fontSize: 15,
+    color: "#777",
+    paddingVertical: 16,
   },
   consultButton: {
     flex: 1,
