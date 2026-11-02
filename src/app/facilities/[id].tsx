@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 
+import { FacilityPremiumDetails, type FacilityDetails } from "@/components/facility-premium-details";
 import { getFacilityTypeName, resolveImageUrl } from "@/config/api";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/api";
@@ -29,6 +30,7 @@ type Facility = {
   admissionConditions: string | null;
   photos: string[] | null;
   publicData?: boolean; // 공공데이터로 들여온 시설 — 받을 운영자가 없어 전화 문의만 가능
+  premiumDetails?: FacilityDetails | null; // 광고가 유효한 시설에만 있음
 };
 
 function formatPrice(price: number | null | undefined) {
@@ -221,6 +223,8 @@ export default function FacilityDetailScreen() {
             </>
           )}
         </View>
+
+        {facility.premiumDetails && <FacilityPremiumDetails details={facility.premiumDetails} />}
 
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>시설 소개</Text>

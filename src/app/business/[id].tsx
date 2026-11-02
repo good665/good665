@@ -16,6 +16,7 @@ import {
 } from "react-native";
 
 import { API_BASE_URL, FACILITY_TYPE_LABELS, parseFee, resolveImageUrl } from "@/config/api";
+import { BusinessFacilityDetailsEditor } from "@/components/business-facility-details-editor";
 import { apiFetch, apiUpload, imageFormData } from "@/lib/api";
 
 const facilityTypes = Object.entries(FACILITY_TYPE_LABELS);
@@ -542,6 +543,8 @@ export default function EditMyFacilityScreen() {
       {!photosLoading && photos.length === 0 && (
         <Text style={styles.helper}>등록된 사진이 없습니다.</Text>
       )}
+
+      <BusinessFacilityDetailsEditor facilityId={facilityId} />
 
       <Text style={styles.sectionTitle}>시설 정보</Text>
 
