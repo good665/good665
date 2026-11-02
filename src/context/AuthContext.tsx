@@ -49,6 +49,7 @@ type AuthContextValue = {
   loginWithOAuthCode: (code: string) => Promise<void>;
   signup: (input: SignupInput) => Promise<void>;
   signupBusiness: (input: BusinessSignupInput) => Promise<void>;
+  refreshUser: () => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -117,6 +118,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(result.user);
   }, []);
 
+  const refreshUser = useCallback(async () => {
+    setUser(await apiFetch<User>("/api/auth/me"));
+  }, []);
+
   const signup = useCallback(async (input: SignupInput) => {
     const result = await apiFetch<AuthResponse>("/api/auth/signup", {
       method: "POST",
@@ -138,8 +143,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, loading, login, loginWithOAuthCode, signup, signupBusiness, logout }),
-    [user, loading, login, loginWithOAuthCode, signup, signupBusiness, logout],
+    () => ({ user, loading, login, loginWithOAuthCode, signup, signupBusiness, refreshUser, logout }),
+    [user, loading, login, loginWithOAuthCode, signup, signupBusiness, refreshUser, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

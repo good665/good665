@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 
+import { useAuth } from "@/context/AuthContext";
 import { alertMessage } from "@/lib/alert";
 import { apiFetch } from "@/lib/api";
 import { checkFutureDateTime, getTomorrow } from "@/lib/datetime";
@@ -26,12 +27,21 @@ export default function NewReservationScreen() {
   const [time, setTime] = useState("14:00");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const { user, refreshUser } = useAuth();
+  // 시설에서 연락할 번호가 없는 사용자(소셜 로그인 등)는 신청할 때 입력
+  const needsPhone = !user?.phone?.trim();
+  const [phone, setPhone] = useState("");
 
   async function submitReservation() {
     const parsedFacilityId = Number(facilityId);
 
     if (!Number.isInteger(parsedFacilityId) || parsedFacilityId <= 0) {
       alertMessage("오류", "시설 정보가 올바르지 않습니다.");
+      return;
+    }
+
+    if (needsPhone && !phone.trim()) {
+      alertMessage("입력 확인", "시설에서 연락받을 전화번호를 입력해 주세요.");
       return;
     }
 
@@ -53,8 +63,12 @@ export default function NewReservationScreen() {
           facilityId: parsedFacilityId,
           scheduledAt,
           message: message.trim(),
+          ...(needsPhone ? { contactPhone: phone.trim() } : {}),
         }),
       });
+
+      // 저장된 번호를 반영. 실패해도 신청은 이미 완료됨
+      if (needsPhone) await refreshUser().catch(() => {});
 
       router.replace({
         pathname: "/reservations/success",
@@ -121,6 +135,21 @@ export default function NewReservationScreen() {
       <Text style={styles.helper}>
         입력 형식: 24시간제 HH:mm (같은 시설·시간대는 예약 정원이 찰 수 있습니다)
       </Text>
+
+      {needsPhone && (
+        <>
+          <Text style={styles.label}>연락받을 전화번호</Text>
+          <TextInput
+            style={styles.input}
+            value={phone}
+            onChangeText={setPhone}
+            placeholder="010-1234-5678"
+            keyboardType="phone-pad"
+            autoComplete="tel"
+            accessibilityLabel="연락받을 전화번호"
+          />
+        </>
+      )}
 
       <Text style={styles.label}>요청 사항</Text>
 
