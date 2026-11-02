@@ -11,6 +11,7 @@ type ImportResult = {
   failed: number;
   remaining: number;
   firstError: string | null;
+  removed: number; // 공단 목록에서 사라져 지운 시설 수
 };
 
 // 지원 지역 — 백엔드 LtcImportService.REGIONS 와 맞춤
@@ -77,6 +78,7 @@ export default function AdminPublicDataScreen() {
           <Text style={styles.line}>대상 기관 {result.institutions.toLocaleString("ko-KR")}곳</Text>
           <Text style={styles.line}>이번에 추가 {result.imported}곳 · 이전에 추가 {result.alreadyImported}곳</Text>
           <Text style={styles.line}>남은 기관 {result.remaining.toLocaleString("ko-KR")}곳</Text>
+          {result.removed > 0 && <Text style={styles.line}>목록에서 사라져 제외 {result.removed}곳</Text>}
           {result.failed > 0 && <Text style={styles.error}>실패 {result.failed}곳</Text>}
           {result.firstError && <Text style={styles.error}>{result.firstError}</Text>}
         </View>
