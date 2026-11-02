@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react-native";
 
 import NewConsultationScreen from "@/app/consultations/new";
+import NewReservationScreen from "@/app/reservations/new";
 import { useAuth } from "@/context/AuthContext";
 import { alertMessage } from "@/lib/alert";
 import { apiFetch } from "@/lib/api";
@@ -19,39 +20,50 @@ const refreshUser = jest.fn();
 const asUser = (phone: string | null) =>
   (useAuth as jest.Mock).mockReturnValue({ user: { id: 1, phone }, refreshUser });
 
-const submit = async () => fireEvent.press(screen.getByText("상담 신청하기"));
+const LABEL = "연락받을 전화번호";
+const sentPhone = () => JSON.parse(mockFetch.mock.calls[0][1].body).contactPhone;
 
-describe("상담 신청 연락처", () => {
+describe.each([
+  ["상담 신청", NewConsultationScreen, "상담 신청하기"],
+  ["방문 예약", NewReservationScreen, "방문 예약하기"],
+])("%s 연락처", (_, Screen, submitLabel) => {
+  const submit = async () => fireEvent.press(screen.getByText(submitLabel));
+
   beforeEach(() => {
     mockFetch.mockReset().mockResolvedValue({});
     refreshUser.mockReset().mockResolvedValue(undefined);
     (alertMessage as jest.Mock).mockReset();
   });
 
-  it("전화번호가 있으면 입력칸 없이 신청한다", async () => {
+  it("저장된 번호를 미리 채우고, 그대로 신청하면 사용자 정보를 다시 읽지 않는다", async () => {
     asUser("010-1111-2222");
-    await render(<NewConsultationScreen />);
+    await render(<Screen />);
 
-    expect(screen.queryByLabelText("연락받을 전화번호")).toBeNull();
+    expect(screen.getByLabelText(LABEL).props.value).toBe("010-1111-2222");
 
     await submit();
-    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
-    expect(body.contactPhone).toBeUndefined();
+    expect(sentPhone()).toBe("010-1111-2222");
+    expect(refreshUser).not.toHaveBeenCalled();
   });
 
-  it("전화번호가 없으면 입력해야 신청된다", async () => {
+  it("번호를 고쳐서 신청하면 새 번호를 보내고 사용자 정보를 갱신한다", async () => {
+    asUser("010-1234-567");
+    await render(<Screen />);
+
+    await fireEvent.changeText(screen.getByLabelText(LABEL), " 010-1234-5678 ");
+    await submit();
+
+    expect(sentPhone()).toBe("010-1234-5678");
+    expect(refreshUser).toHaveBeenCalled();
+  });
+
+  it("번호가 비어 있으면 신청하지 않고 안내한다", async () => {
     asUser(null);
-    await render(<NewConsultationScreen />);
+    await render(<Screen />);
 
     await submit();
+
     expect(mockFetch).not.toHaveBeenCalled();
     expect(alertMessage).toHaveBeenCalled();
-
-    await fireEvent.changeText(screen.getByLabelText("연락받을 전화번호"), " 010-1234-5678 ");
-    await submit();
-
-    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
-    expect(body.contactPhone).toBe("010-1234-5678");
-    expect(refreshUser).toHaveBeenCalled();
   });
 });
