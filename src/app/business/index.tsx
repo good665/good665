@@ -128,6 +128,14 @@ export default function MyFacilitiesScreen() {
         ))}
       </View>
 
+      <Pressable
+        style={styles.requestsButton}
+        accessibilityRole="button"
+        onPress={() => router.push("/business/requests")}
+      >
+        <Text style={styles.requestsButtonText}>상담·예약 신청 보기</Text>
+      </Pressable>
+
       <Pressable style={styles.createButton} onPress={() => router.push("/business/new")}>
         <Text style={styles.createButtonText}>+ 시설 등록</Text>
       </Pressable>
@@ -221,6 +229,20 @@ const styles = StyleSheet.create({
   },
   filterTextSelected: {
     color: "#FFFFFF",
+    fontWeight: "700",
+  },
+  requestsButton: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1.5,
+    borderColor: "#39765B",
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  requestsButtonText: {
+    color: "#39765B",
+    fontSize: 15,
     fontWeight: "700",
   },
   createButton: {

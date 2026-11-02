@@ -35,6 +35,7 @@ export default function BusinessLayout() {
     >
       <Stack.Screen name="index" options={{ title: "내 시설 관리" }} />
       <Stack.Screen name="new" options={{ title: "시설 등록" }} />
+      <Stack.Screen name="requests" options={{ title: "상담·예약 신청" }} />
       <Stack.Screen name="[id]" options={{ title: "시설 수정" }} />
     </Stack>
   );
