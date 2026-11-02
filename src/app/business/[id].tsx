@@ -17,7 +17,7 @@ import {
 
 import { API_BASE_URL, FACILITY_TYPE_LABELS, parseFee, resolveImageUrl } from "@/config/api";
 import { BusinessFacilityDetailsEditor } from "@/components/business-facility-details-editor";
-import { apiFetch, apiUpload, imageFormData } from "@/lib/api";
+import { apiFetch, apiUpload, uploadFormData } from "@/lib/api";
 
 const facilityTypes = Object.entries(FACILITY_TYPE_LABELS);
 
@@ -262,7 +262,7 @@ export default function EditMyFacilityScreen() {
       return;
     }
 
-    const formData = imageFormData(result.assets[0]);
+    const formData = uploadFormData(result.assets[0]);
 
     setUploading(true);
 

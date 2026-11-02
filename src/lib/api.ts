@@ -1,4 +1,3 @@
-import type { ImagePickerAsset } from "expo-image-picker";
 import { Platform } from "react-native";
 
 import { API_BASE_URL } from "@/config/api";
@@ -89,11 +88,17 @@ export async function apiFetch<T = unknown>(
   return data as T;
 }
 
-// 사진 업로드용 FormData. 네이티브는 {uri,name,type} 객체를 받지만 웹 브라우저는 그걸
-// "[object Object]" 문자열로 보내버리므로 웹에서는 image picker 가 주는 실제 File 을 넣음
-export function imageFormData(asset: ImagePickerAsset) {
+// 업로드용 FormData (image picker, document picker 결과 공용). 네이티브는 {uri,name,type} 객체를 받지만
+// 웹 브라우저는 그걸 "[object Object]" 문자열로 보내버리므로 웹에서는 picker 가 주는 실제 File 을 넣음
+export function uploadFormData(asset: {
+  uri: string;
+  fileName?: string | null;
+  name?: string;
+  mimeType?: string | null;
+  file?: File;
+}) {
   const formData = new FormData();
-  const name = asset.fileName ?? `photo-${Date.now()}.jpg`;
+  const name = asset.fileName ?? asset.name ?? `photo-${Date.now()}.jpg`;
 
   if (Platform.OS === "web" && asset.file) {
     formData.append("file", asset.file, name);

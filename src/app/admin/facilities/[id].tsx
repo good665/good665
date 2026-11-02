@@ -15,7 +15,7 @@ import {
 } from "react-native";
 
 import { FACILITY_TYPE_LABELS, parseFee, resolveImageUrl } from "@/config/api";
-import { apiFetch, apiUpload, imageFormData } from "@/lib/api";
+import { apiFetch, apiUpload, uploadFormData } from "@/lib/api";
 
 const facilityTypes = Object.entries(FACILITY_TYPE_LABELS);
 
@@ -273,7 +273,7 @@ export default function EditFacilityScreen() {
       return;
     }
 
-    const formData = imageFormData(result.assets[0]);
+    const formData = uploadFormData(result.assets[0]);
 
     setUploading(true);
 

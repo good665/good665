@@ -15,7 +15,7 @@ import {
 import { type FacilityDetails } from "@/components/facility-premium-details";
 import { parseFee } from "@/config/api";
 import { alertMessage } from "@/lib/alert";
-import { apiFetch, apiUpload, imageFormData } from "@/lib/api";
+import { apiFetch, apiUpload, uploadFormData } from "@/lib/api";
 
 type RoomForm = {
   key: number;
@@ -36,7 +36,7 @@ function amountText(value: number | null | undefined) {
 }
 
 /** 입력값 → 요청 본문. 잘못된 입력은 조용히 지워지지 않도록 오류 문구를 던짐 */
-function toRequest(rooms: RoomForm[]) {
+export function toRequest(rooms: RoomForm[]) {
   return {
     rooms: rooms.map((room) => {
       const name = room.roomType.trim() || "방";
@@ -47,7 +47,8 @@ function toRequest(rooms: RoomForm[]) {
       const jeonse = parseFee(room.jeonse);
       const sale = parseFee(room.sale);
 
-      if (Number.isNaN(areaSqm) || [deposit, rent, jeonse, sale].some(Number.isNaN)) {
+      // Infinity 는 JSON 에서 null 이 되어 기존 값이 조용히 지워지므로 함께 막음
+      if ([areaSqm, deposit, rent, jeonse, sale].some((value) => value !== null && !Number.isFinite(value))) {
         throw new Error(`${name}: 크기와 가격은 숫자로 입력해 주세요.`);
       }
       if (deposit !== null && rent === null) {
@@ -144,7 +145,7 @@ export function BusinessFacilityDetailsEditor({ facilityId }: { facilityId: numb
       preferredAssetRepresentationMode: ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
     });
     if (!result.canceled && result.assets?.[0]) {
-      await upload(imageFormData(result.assets[0]));
+      await upload(uploadFormData(result.assets[0]));
     }
   }
 
@@ -153,17 +154,7 @@ export function BusinessFacilityDetailsEditor({ facilityId }: { facilityId: numb
     const asset = result.assets?.[0];
     if (result.canceled || !asset) return;
 
-    const formData = new FormData();
-    if (Platform.OS === "web" && asset.file) {
-      formData.append("file", asset.file, asset.name);
-    } else {
-      formData.append("file", {
-        uri: asset.uri,
-        name: asset.name,
-        type: "application/pdf",
-      } as unknown as Blob);
-    }
-    await upload(formData);
+    await upload(uploadFormData({ ...asset, mimeType: "application/pdf" }));
   }
 
   async function deletePlan(planId: number) {
