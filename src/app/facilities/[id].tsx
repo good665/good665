@@ -205,32 +205,43 @@ export default function FacilityDetailScreen() {
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>월 이용 비용</Text>
 
-          <Text style={styles.price}>
-            {formatPrice(facility.monthlyFeeMin)}
-            {" ~ "}
-            {formatPrice(facility.monthlyFeeMax)}
-          </Text>
+          {facility.publicData ? (
+            <Text style={styles.price}>시설에 문의</Text>
+          ) : (
+            <>
+              <Text style={styles.price}>
+                {formatPrice(facility.monthlyFeeMin)}
+                {" ~ "}
+                {formatPrice(facility.monthlyFeeMax)}
+              </Text>
 
-          <Text style={styles.notice}>
-            실제 비용은 입주 조건과 서비스에 따라 달라질 수 있습니다.
-          </Text>
+              <Text style={styles.notice}>
+                실제 비용은 입주 조건과 서비스에 따라 달라질 수 있습니다.
+              </Text>
+            </>
+          )}
         </View>
 
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>시설 소개</Text>
 
           <Text style={styles.bodyText}>
-            {facility.introduction || "등록된 시설 소개가 없습니다."}
+            {/* 공공데이터 소개의 첫 줄은 상단 "정보 출처"와 같은 내용이라 생략 */}
+            {(facility.publicData
+              ? facility.introduction?.replace(/^정보 출처:.*\n/, "")
+              : facility.introduction) || "등록된 시설 소개가 없습니다."}
           </Text>
         </View>
 
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>입주 조건</Text>
+        {!facility.publicData && (
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>입주 조건</Text>
 
-          <Text style={styles.bodyText}>
-            {facility.admissionConditions || "등록된 입주 조건이 없습니다."}
-          </Text>
-        </View>
+            <Text style={styles.bodyText}>
+              {facility.admissionConditions || "등록된 입주 조건이 없습니다."}
+            </Text>
+          </View>
+        )}
       </ScrollView>
 
       <View style={styles.bottomBar}>
