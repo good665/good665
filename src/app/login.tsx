@@ -12,6 +12,7 @@ import {
   View,
 } from "react-native";
 
+import { SocialLoginButtons } from "@/components/social-login-buttons";
 import { useAuth } from "@/context/AuthContext";
 
 export default function LoginScreen() {
@@ -92,6 +93,8 @@ export default function LoginScreen() {
             <Text style={styles.buttonText}>로그인</Text>
           )}
         </Pressable>
+
+        <SocialLoginButtons />
 
         <View style={styles.row}>
           <Text style={styles.rowText}>계정이 없으신가요?</Text>

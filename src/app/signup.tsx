@@ -12,6 +12,7 @@ import {
   View,
 } from "react-native";
 
+import { SocialLoginButtons } from "@/components/social-login-buttons";
 import { useAuth } from "@/context/AuthContext";
 
 export default function SignupScreen() {
@@ -147,6 +148,8 @@ export default function SignupScreen() {
             <Text style={styles.buttonText}>가입하기</Text>
           )}
         </Pressable>
+
+        <SocialLoginButtons />
 
         <View style={styles.row}>
           <Text style={styles.rowText}>이미 계정이 있으신가요?</Text>

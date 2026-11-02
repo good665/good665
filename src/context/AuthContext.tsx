@@ -9,6 +9,7 @@ import {
 } from "react";
 
 import { ApiError, apiFetch, setUnauthorizedHandler } from "@/lib/api";
+import { exchangeOAuthCode } from "@/lib/oauth";
 import { clearToken, getToken, saveToken } from "@/lib/storage";
 
 export type User = {
@@ -45,6 +46,7 @@ type AuthContextValue = {
   user: User | null;
   loading: boolean; // 앱 시작 시 저장된 토큰을 확인하는 동안 true
   login: (email: string, password: string) => Promise<void>;
+  loginWithOAuthCode: (code: string) => Promise<void>;
   signup: (input: SignupInput) => Promise<void>;
   signupBusiness: (input: BusinessSignupInput) => Promise<void>;
   logout: () => Promise<void>;
@@ -108,6 +110,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(result.user);
   }, []);
 
+  const loginWithOAuthCode = useCallback(async (code: string) => {
+    const result = await exchangeOAuthCode<AuthResponse>(code);
+
+    await saveToken(result.token);
+    setUser(result.user);
+  }, []);
+
   const signup = useCallback(async (input: SignupInput) => {
     const result = await apiFetch<AuthResponse>("/api/auth/signup", {
       method: "POST",
@@ -129,8 +138,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, loading, login, signup, signupBusiness, logout }),
-    [user, loading, login, signup, signupBusiness, logout],
+    () => ({ user, loading, login, loginWithOAuthCode, signup, signupBusiness, logout }),
+    [user, loading, login, loginWithOAuthCode, signup, signupBusiness, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
