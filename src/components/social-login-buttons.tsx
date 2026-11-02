@@ -5,7 +5,7 @@ import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { API_BASE_URL } from "@/config/api";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/api";
-import { oauthErrorMessage, parseOAuthRedirect } from "@/lib/oauth";
+import { createOAuthChallenge, oauthErrorMessage, parseOAuthRedirect } from "@/lib/oauth";
 
 const APP_REDIRECT = "tansongmobile://oauth-callback";
 
@@ -38,16 +38,17 @@ export function SocialLoginButtons() {
 
   async function start(provider: string) {
     setError("");
-    const base = `${API_BASE_URL}/api/auth/oauth/${provider}/start?redirect=`;
-
-    if (Platform.OS === "web") {
-      // 웹은 같은 창에서 이동하고 /oauth-callback 화면이 이어서 처리
-      window.location.assign(base + encodeURIComponent(`${window.location.origin}/oauth-callback`));
-      return;
-    }
-
     setBusy(true);
     try {
+      const challenge = await createOAuthChallenge();
+      const base = `${API_BASE_URL}/api/auth/oauth/${provider}/start?code_challenge=${challenge}&redirect=`;
+
+      if (Platform.OS === "web") {
+        // 웹은 같은 창에서 이동하고 /oauth-callback 화면이 이어서 처리
+        window.location.assign(base + encodeURIComponent(`${window.location.origin}/oauth-callback`));
+        return;
+      }
+
       const result = await WebBrowser.openAuthSessionAsync(base + encodeURIComponent(APP_REDIRECT), APP_REDIRECT);
       if (result.type !== "success") return; // 사용자가 창을 닫음
 

@@ -1,7 +1,35 @@
 import { apiFetch } from "@/lib/api";
-import { exchangeOAuthCode, oauthErrorMessage, parseOAuthRedirect } from "@/lib/oauth";
+import {
+  createOAuthChallenge,
+  exchangeOAuthCode,
+  oauthErrorMessage,
+  parseOAuthRedirect,
+} from "@/lib/oauth";
+import { clearOAuthVerifier, getOAuthVerifier, saveOAuthVerifier } from "@/lib/storage";
 
 jest.mock("@/lib/api", () => ({ apiFetch: jest.fn() }));
+jest.mock("@/lib/storage", () => {
+  let value: string | null = null;
+  return {
+    saveOAuthVerifier: jest.fn(async (v: string) => {
+      value = v;
+    }),
+    getOAuthVerifier: jest.fn(async () => value),
+    clearOAuthVerifier: jest.fn(async () => {
+      value = null;
+    }),
+  };
+});
+jest.mock("expo-crypto", () => {
+  const nodeCrypto = jest.requireActual("crypto");
+  return {
+    CryptoDigestAlgorithm: { SHA256: "SHA-256" },
+    CryptoEncoding: { BASE64: "base64" },
+    getRandomBytesAsync: async (n: number) => new Uint8Array(nodeCrypto.randomBytes(n)),
+    digestStringAsync: async (_: string, data: string) =>
+      nodeCrypto.createHash("sha256").update(data).digest("base64"),
+  };
+});
 
 const mockFetch = apiFetch as jest.Mock;
 
@@ -29,11 +57,35 @@ describe("oauthErrorMessage", () => {
   });
 });
 
+describe("createOAuthChallenge", () => {
+  it("verifier 를 저장하고 그 SHA-256 을 base64url 로 돌려준다", async () => {
+    const challenge = await createOAuthChallenge();
+    const verifier = await getOAuthVerifier();
+
+    expect(verifier).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    expect(challenge).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    const expected = jest
+      .requireActual("crypto")
+      .createHash("sha256")
+      .update(verifier!)
+      .digest("base64url");
+    expect(challenge).toBe(expected);
+  });
+
+  it("매번 다른 값을 만든다", async () => {
+    const first = await createOAuthChallenge();
+    expect(await createOAuthChallenge()).not.toBe(first);
+  });
+});
+
 describe("exchangeOAuthCode", () => {
-  beforeEach(() => mockFetch.mockReset());
+  beforeEach(async () => {
+    mockFetch.mockReset();
+    await saveOAuthVerifier("my-verifier");
+  });
 
   // Android 는 딥링크가 화면과 인증 세션 양쪽에 도착할 수 있는데, 코드는 한 번만 쓸 수 있음
-  it("같은 코드는 한 번만 교환한다", async () => {
+  it("같은 코드는 한 번만 교환하고 verifier 를 함께 보낸 뒤 지운다", async () => {
     mockFetch.mockResolvedValue({ token: "t", user: {} });
 
     const [a, b] = await Promise.all([exchangeOAuthCode("same"), exchangeOAuthCode("same")]);
@@ -42,7 +94,17 @@ describe("exchangeOAuthCode", () => {
     expect(mockFetch).toHaveBeenCalledTimes(1);
     expect(mockFetch).toHaveBeenCalledWith("/api/auth/oauth/exchange", {
       method: "POST",
-      body: JSON.stringify({ code: "same" }),
+      body: JSON.stringify({ code: "same", codeVerifier: "my-verifier" }),
     });
+    expect(clearOAuthVerifier).toHaveBeenCalled();
+    expect(await getOAuthVerifier()).toBeNull();
+  });
+
+  // 남이 보낸 로그인 링크를 연 경우 이 기기에는 verifier 가 없음
+  it("이 기기에서 시작하지 않은 로그인은 서버에 보내지 않는다", async () => {
+    await clearOAuthVerifier();
+
+    await expect(exchangeOAuthCode("from-link")).rejects.toThrow("다시 시도");
+    expect(mockFetch).not.toHaveBeenCalled();
   });
 });

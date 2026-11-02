@@ -1,4 +1,7 @@
+import * as Crypto from "expo-crypto";
+
 import { apiFetch } from "@/lib/api";
+import { clearOAuthVerifier, getOAuthVerifier, saveOAuthVerifier } from "@/lib/storage";
 
 const MESSAGES: Record<string, string> = {
   cancelled: "로그인이 취소되었습니다.",
@@ -19,17 +22,44 @@ export function parseOAuthRedirect(url: string): { code?: string; error?: string
   return { error: error ? decodeURIComponent(error) : "failed" };
 }
 
+// 256 은 64 로 나누어떨어져 나머지 연산으로도 글자 분포가 치우치지 않음
+const VERIFIER_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+
+/** PKCE: verifier 를 이 기기에 저장하고, 서버에 보낼 해시(challenge)를 돌려줌 */
+export async function createOAuthChallenge() {
+  const bytes = await Crypto.getRandomBytesAsync(43);
+  const verifier = Array.from(bytes, (b) => VERIFIER_CHARS[b % 64]).join("");
+  await saveOAuthVerifier(verifier);
+
+  const digest = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, verifier, {
+    encoding: Crypto.CryptoEncoding.BASE64,
+  });
+  return digest.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+async function exchange<T>(code: string): Promise<T> {
+  const codeVerifier = await getOAuthVerifier();
+  if (!codeVerifier) {
+    // 이 기기에서 시작하지 않은 로그인 (남이 보낸 링크 등)
+    throw new Error("로그인 요청을 찾을 수 없습니다. 로그인 화면에서 다시 시도해 주세요.");
+  }
+
+  const result = await apiFetch<T>("/api/auth/oauth/exchange", {
+    method: "POST",
+    body: JSON.stringify({ code, codeVerifier }),
+  });
+  await clearOAuthVerifier();
+  return result;
+}
+
 const exchanges = new Map<string, Promise<unknown>>();
 
 // 코드는 한 번만 쓸 수 있는데, Android 는 딥링크가 화면과 인증 세션 양쪽에 도착할 수 있어 같은 결과를 나눠 씀
 export function exchangeOAuthCode<T>(code: string): Promise<T> {
-  let exchange = exchanges.get(code);
-  if (!exchange) {
-    exchange = apiFetch<T>("/api/auth/oauth/exchange", {
-      method: "POST",
-      body: JSON.stringify({ code }),
-    });
-    exchanges.set(code, exchange);
+  let pending = exchanges.get(code);
+  if (!pending) {
+    pending = exchange<T>(code);
+    exchanges.set(code, pending);
   }
-  return exchange as Promise<T>;
+  return pending as Promise<T>;
 }
