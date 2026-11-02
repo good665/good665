@@ -18,6 +18,7 @@ import {
 import { API_BASE_URL, FACILITY_TYPE_LABELS, parseFee, resolveImageUrl } from "@/config/api";
 import { BusinessFacilityDetailsEditor } from "@/components/business-facility-details-editor";
 import { apiFetch, apiUpload, uploadFormData } from "@/lib/api";
+import { compressFacilityPhoto } from "@/lib/image-compress";
 
 const facilityTypes = Object.entries(FACILITY_TYPE_LABELS);
 
@@ -262,12 +263,12 @@ export default function EditMyFacilityScreen() {
       return;
     }
 
-    const formData = uploadFormData(result.assets[0]);
-
     setUploading(true);
 
     try {
-      await apiUpload(`/api/business/facilities/${facilityId}/photos`, formData);
+      // 시설 사진은 30~50KB 로 줄여서 올림
+      const photo = await compressFacilityPhoto(result.assets[0] as Parameters<typeof compressFacilityPhoto>[0]);
+      await apiUpload(`/api/business/facilities/${facilityId}/photos`, uploadFormData(photo));
       await loadPhotos();
     } catch (e) {
       const message =
