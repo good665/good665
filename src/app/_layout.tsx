@@ -88,12 +88,13 @@ function AuthGate() {
   const router = useRouter();
 
   const first = segments[0] as string | undefined;
-  const inAuthScreen = first === "login" || first === "signup" || first === "business-signup";
+  const inAuthScreen = first === "login" || first === "signup" || first === "business-signup" || first === "forgot-password";
   const needsLogin =
     first === "consultations" ||
     first === "reservations" ||
     first === "admin" ||
-    first === "business";
+    first === "business" ||
+    first === "account";
 
   useEffect(() => {
     if (loading) return;

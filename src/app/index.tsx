@@ -190,7 +190,9 @@ export default function HomeScreen() {
                       <Text style={styles.authLink}>내 시설 관리</Text>
                     </TouchableOpacity>
                   )}
-                  <Text style={styles.authText}>{user.name}님</Text>
+                  <TouchableOpacity accessibilityRole="link" onPress={() => router.push("/account")}>
+                    <Text style={styles.authLink}>{user.name}님</Text>
+                  </TouchableOpacity>
                   <TouchableOpacity onPress={logout}>
                     <Text style={styles.authLink}>로그아웃</Text>
                   </TouchableOpacity>

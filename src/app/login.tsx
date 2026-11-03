@@ -94,6 +94,10 @@ export default function LoginScreen() {
           )}
         </Pressable>
 
+        <Pressable style={styles.forgot} accessibilityRole="link" onPress={() => router.push("/forgot-password")}>
+          <Text style={styles.link}>비밀번호를 잊으셨나요?</Text>
+        </Pressable>
+
         <SocialLoginButtons />
 
         <View style={styles.row}>
@@ -111,6 +115,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F7F8FA" },
   content: { padding: 24, paddingTop: 48 },
   backText: { color: "#39765B", fontSize: 15, marginBottom: 28 },
+  forgot: { alignItems: "center", paddingTop: 16, paddingBottom: 4 },
   brand: { fontSize: 15, fontWeight: "700", color: "#39765B", marginBottom: 8 },
   title: { fontSize: 28, fontWeight: "700", color: "#26352D" },
   subtitle: { color: "#777", fontSize: 14, marginTop: 8, marginBottom: 28 },
