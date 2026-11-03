@@ -1,3 +1,4 @@
+import { File as ExpoFile } from "expo-file-system";
 import { Platform } from "react-native";
 
 import { API_BASE_URL } from "@/config/api";
@@ -88,13 +89,13 @@ export async function apiFetch<T = unknown>(
   return data as T;
 }
 
-// 업로드용 FormData (image picker, document picker 결과 공용). 네이티브는 {uri,name,type} 객체를 받지만
-// 웹 브라우저는 그걸 "[object Object]" 문자열로 보내버리므로 웹에서는 picker 가 주는 실제 File 을 넣음
+// 업로드용 FormData (image picker, document picker 결과 공용).
+// 앱의 전역 fetch(SDK 58 부터 expo/fetch)는 {uri,name,type} 를 지원하지 않아 expo-file-system 의 File 을 넣고,
+// 웹은 expo-file-system 을 지원하지 않으므로 picker 가 주는 실제 File 을 넣음
 export function uploadFormData(asset: {
   uri: string;
   fileName?: string | null;
   name?: string;
-  mimeType?: string | null;
   file?: File;
 }) {
   const formData = new FormData();
@@ -103,11 +104,7 @@ export function uploadFormData(asset: {
   if (Platform.OS === "web" && asset.file) {
     formData.append("file", asset.file, name);
   } else {
-    formData.append("file", {
-      uri: asset.uri,
-      name,
-      type: asset.mimeType ?? "image/jpeg",
-    } as unknown as Blob);
+    formData.append("file", new ExpoFile(asset.uri) as unknown as Blob);
   }
 
   return formData;
@@ -137,7 +134,9 @@ export async function apiUpload<T = unknown>(
       headers,
       body: formData,
     });
-  } catch {
+  } catch (e) {
+    // 연결 문제가 아닌 오류도 여기로 오므로 원인을 남김
+    console.warn("업로드 요청 실패", e);
     throw new ApiError(
       "서버에 연결할 수 없습니다. 네트워크와 서버 실행 상태를 확인해 주세요.",
       0,

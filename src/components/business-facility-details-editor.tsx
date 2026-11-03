@@ -154,7 +154,7 @@ export function BusinessFacilityDetailsEditor({ facilityId }: { facilityId: numb
     const asset = result.assets?.[0];
     if (result.canceled || !asset) return;
 
-    await upload(uploadFormData({ ...asset, mimeType: "application/pdf" }));
+    await upload(uploadFormData(asset));
   }
 
   async function deletePlan(planId: number) {
