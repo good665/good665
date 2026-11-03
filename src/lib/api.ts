@@ -137,6 +137,9 @@ export async function apiUpload<T = unknown>(
   } catch (e) {
     // 연결 문제가 아닌 오류도 여기로 오므로 원인을 남김
     console.warn("업로드 요청 실패", e);
+    if (e instanceof Error && e.message.includes("FileSystemFile")) {
+      throw new ApiError("첨부한 파일을 읽지 못했습니다. 파일을 다시 선택해 주세요.", 0);
+    }
     throw new ApiError(
       "서버에 연결할 수 없습니다. 네트워크와 서버 실행 상태를 확인해 주세요.",
       0,

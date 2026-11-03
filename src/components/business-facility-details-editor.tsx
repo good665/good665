@@ -1,5 +1,3 @@
-import * as DocumentPicker from "expo-document-picker";
-import * as ImagePicker from "expo-image-picker";
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -16,6 +14,7 @@ import { type FacilityDetails } from "@/components/facility-premium-details";
 import { parseFee } from "@/config/api";
 import { alertMessage } from "@/lib/alert";
 import { apiFetch, apiUpload, uploadFormData } from "@/lib/api";
+import { pickDocumentPhoto, pickPdf } from "@/lib/file-pickers";
 
 type RoomForm = {
   key: number;
@@ -131,30 +130,9 @@ export function BusinessFacilityDetailsEditor({ facilityId }: { facilityId: numb
     }
   }
 
-  async function pickImage() {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      alertMessage("권한 필요", "도면도를 등록하려면 사진 보관함 접근 권한이 필요합니다.");
-      return;
-    }
-
-    // quality 1 은 원본을 그대로 복사해 iPhone HEIC 가 서버에서 거절됨 → JPEG 로 변환되도록 지정
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      quality: 0.9,
-      preferredAssetRepresentationMode: ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
-    });
-    if (!result.canceled && result.assets?.[0]) {
-      await upload(uploadFormData(result.assets[0]));
-    }
-  }
-
-  async function pickPdf() {
-    const result = await DocumentPicker.getDocumentAsync({ type: "application/pdf" });
-    const asset = result.assets?.[0];
-    if (result.canceled || !asset) return;
-
-    await upload(uploadFormData(asset));
+  async function attach(pick: () => Promise<Parameters<typeof uploadFormData>[0] | null>) {
+    const asset = await pick();
+    if (asset) await upload(uploadFormData(asset));
   }
 
   async function deletePlan(planId: number) {
@@ -272,10 +250,10 @@ export function BusinessFacilityDetailsEditor({ facilityId }: { facilityId: numb
         accessibilityLabel="도면도 층 이름"
       />
       <View style={styles.buttonRow}>
-        <Pressable style={styles.outline} disabled={uploading} accessibilityRole="button" onPress={pickImage}>
+        <Pressable style={styles.outline} disabled={uploading} accessibilityRole="button" onPress={() => attach(pickDocumentPhoto)}>
           <Text style={styles.outlineText}>사진 선택</Text>
         </Pressable>
-        <Pressable style={styles.outline} disabled={uploading} accessibilityRole="button" onPress={pickPdf}>
+        <Pressable style={styles.outline} disabled={uploading} accessibilityRole="button" onPress={() => attach(pickPdf)}>
           <Text style={styles.outlineText}>PDF 선택</Text>
         </Pressable>
       </View>
