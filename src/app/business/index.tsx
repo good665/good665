@@ -136,6 +136,14 @@ export default function MyFacilitiesScreen() {
         <Text style={styles.requestsButtonText}>상담·예약 신청 보기</Text>
       </Pressable>
 
+      <Pressable
+        style={styles.requestsButton}
+        accessibilityRole="button"
+        onPress={() => router.push("/business/claim")}
+      >
+        <Text style={styles.requestsButtonText}>이미 앱에 있는 내 시설 찾기</Text>
+      </Pressable>
+
       <Pressable style={styles.createButton} onPress={() => router.push("/business/new")}>
         <Text style={styles.createButtonText}>+ 시설 등록</Text>
       </Pressable>

@@ -27,6 +27,11 @@ const menuItems = [
     path: "/admin/subscriptions" as Href,
   },
   {
+    title: "시설 소유권 신청",
+    description: "사업자의 공공데이터 시설 소유권 신청 검토 및 승인·거절",
+    path: "/admin/claims" as Href,
+  },
+  {
     title: "공공데이터 시설 가져오기",
     description: "국민건강보험공단 장기요양기관(서울·경기)을 시설로 등록",
     path: "/admin/public-data" as Href,
