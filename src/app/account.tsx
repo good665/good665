@@ -15,10 +15,22 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { alertMessage } from "@/lib/alert";
 import { apiFetch } from "@/lib/api";
+import { saveToken } from "@/lib/storage";
 
 export default function AccountScreen() {
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
+
+  const [name, setName] = useState(user?.name ?? "");
+  const [phone, setPhone] = useState(user?.phone ?? "");
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileError, setProfileError] = useState("");
+
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [newPasswordConfirm, setNewPasswordConfirm] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
 
   const [socialOnly, setSocialOnly] = useState<boolean | null>(null);
   const [password, setPassword] = useState("");
@@ -38,6 +50,54 @@ export default function AccountScreen() {
       active = false;
     };
   }, []);
+
+  async function saveProfile() {
+    setSavingProfile(true);
+    setProfileError("");
+    try {
+      await apiFetch("/api/account/profile", {
+        method: "PUT",
+        body: JSON.stringify({ name: name.trim(), phone: phone.trim() }),
+      });
+      // 저장은 이미 끝났으므로 갱신 실패를 저장 실패로 보이지 않게 함
+      await refreshUser().catch(() => {});
+      alertMessage("저장 완료", "내 정보를 저장했습니다.");
+    } catch (e) {
+      setProfileError(e instanceof Error ? e.message : "내 정보를 저장하지 못했습니다.");
+    } finally {
+      setSavingProfile(false);
+    }
+  }
+
+  async function changePassword() {
+    setPasswordError("");
+    if (!currentPassword) {
+      setPasswordError("현재 비밀번호를 입력해 주세요.");
+      return;
+    }
+    if (newPassword !== newPasswordConfirm) {
+      setPasswordError("새 비밀번호가 서로 다릅니다.");
+      return;
+    }
+
+    setChangingPassword(true);
+    try {
+      const { token } = await apiFetch<{ token: string }>("/api/account/password", {
+        method: "POST",
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      // 이전 토큰은 무효가 되므로 바로 교체
+      await saveToken(token);
+      setCurrentPassword("");
+      setNewPassword("");
+      setNewPasswordConfirm("");
+      alertMessage("변경 완료", "비밀번호를 변경했습니다. 다른 기기에서는 다시 로그인해 주세요.");
+    } catch (e) {
+      setPasswordError(e instanceof Error ? e.message : "비밀번호를 변경하지 못했습니다.");
+    } finally {
+      setChangingPassword(false);
+    }
+  }
 
   async function withdraw() {
     setSubmitting(true);
@@ -90,13 +150,86 @@ export default function AccountScreen() {
       <Text style={styles.title}>내 정보</Text>
 
       <View style={styles.card}>
-        <Text style={styles.label}>이름</Text>
-        <Text style={styles.value}>{user.name}</Text>
-        <Text style={styles.label}>이메일</Text>
+        <Text style={styles.label}>이메일 (변경할 수 없습니다)</Text>
         <Text style={styles.value}>{email}</Text>
-        <Text style={styles.label}>전화번호</Text>
-        <Text style={styles.value}>{user.phone || "등록된 전화번호가 없습니다."}</Text>
+
+        <Text style={styles.inputLabel}>이름</Text>
+        <TextInput style={styles.input} value={name} onChangeText={setName} maxLength={100} accessibilityLabel="이름" />
+
+        <Text style={styles.inputLabel}>전화번호</Text>
+        <TextInput
+          style={styles.input}
+          value={phone}
+          onChangeText={setPhone}
+          placeholder="010-1234-5678"
+          keyboardType="phone-pad"
+          accessibilityLabel="전화번호"
+        />
+
+        {!!profileError && <Text style={styles.error}>{profileError}</Text>}
+
+        <Pressable
+          style={[styles.primaryButton, savingProfile && styles.disabled]}
+          accessibilityRole="button"
+          disabled={savingProfile}
+          onPress={saveProfile}
+        >
+          {savingProfile ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.primaryButtonText}>저장</Text>}
+        </Pressable>
       </View>
+
+      {socialOnly === false && (
+        <>
+          <Text style={styles.sectionTitle}>비밀번호 변경</Text>
+          <View style={styles.card}>
+            <Text style={styles.fieldLabel}>현재 비밀번호</Text>
+            <TextInput
+              style={styles.input}
+              value={currentPassword}
+              onChangeText={setCurrentPassword}
+              secureTextEntry
+              autoCapitalize="none"
+              accessibilityLabel="현재 비밀번호"
+            />
+
+            <Text style={styles.inputLabel}>새 비밀번호</Text>
+            <TextInput
+              style={styles.input}
+              value={newPassword}
+              onChangeText={setNewPassword}
+              placeholder="영문과 숫자를 포함해 8자 이상"
+              secureTextEntry
+              autoCapitalize="none"
+              accessibilityLabel="새 비밀번호"
+            />
+
+            <Text style={styles.inputLabel}>새 비밀번호 확인</Text>
+            <TextInput
+              style={styles.input}
+              value={newPasswordConfirm}
+              onChangeText={setNewPasswordConfirm}
+              secureTextEntry
+              autoCapitalize="none"
+              accessibilityLabel="새 비밀번호 확인"
+            />
+
+            {!!passwordError && <Text style={styles.error}>{passwordError}</Text>}
+
+            <Pressable
+              style={[styles.primaryButton, changingPassword && styles.disabled]}
+              accessibilityRole="button"
+              disabled={changingPassword}
+              onPress={changePassword}
+            >
+              {changingPassword ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.primaryButtonText}>비밀번호 변경</Text>
+              )}
+            </Pressable>
+          </View>
+        </>
+      )}
 
       <Text style={styles.sectionTitle}>회원 탈퇴</Text>
 
@@ -162,7 +295,10 @@ const styles = StyleSheet.create({
   warning: { fontSize: 14, fontWeight: "700", color: "#C62828", marginBottom: 8, lineHeight: 21 },
   item: { fontSize: 13, color: "#444", lineHeight: 21, marginTop: 4 },
   loader: { marginTop: 16 },
+  fieldLabel: { fontSize: 14, fontWeight: "600", color: "#333", marginBottom: 8 },
   inputLabel: { fontSize: 14, fontWeight: "600", color: "#333", marginTop: 16, marginBottom: 8 },
+  primaryButton: { backgroundColor: "#39765B", borderRadius: 10, paddingVertical: 13, alignItems: "center", marginTop: 16 },
+  primaryButtonText: { color: "#FFFFFF", fontSize: 15, fontWeight: "700" },
   input: {
     backgroundColor: "#FFFFFF",
     borderWidth: 1,

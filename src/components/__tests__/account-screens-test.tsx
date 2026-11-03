@@ -6,11 +6,13 @@ import ForgotPasswordScreen from "@/app/forgot-password";
 import { useAuth } from "@/context/AuthContext";
 import { alertMessage } from "@/lib/alert";
 import { apiFetch } from "@/lib/api";
+import { saveToken } from "@/lib/storage";
 
 const mockReplace = jest.fn();
 
 jest.mock("@/lib/api", () => ({ apiFetch: jest.fn() }));
 jest.mock("@/lib/alert", () => ({ alertMessage: jest.fn() }));
+jest.mock("@/lib/storage", () => ({ saveToken: jest.fn() }));
 jest.mock("@/context/AuthContext", () => ({ useAuth: jest.fn() }));
 jest.mock("expo-router", () => ({
   useRouter: () => ({ replace: mockReplace, back: jest.fn(), canGoBack: () => true }),
@@ -18,14 +20,17 @@ jest.mock("expo-router", () => ({
 
 const mockFetch = apiFetch as jest.Mock;
 const logout = jest.fn();
+const refreshUser = jest.fn();
 
 const asUser = (role: string, email = "a@b.com") =>
-  (useAuth as jest.Mock).mockReturnValue({ user: { id: 1, name: "홍길동", email, phone: null, role }, logout });
+  (useAuth as jest.Mock).mockReturnValue({ user: { id: 1, name: "홍길동", email, phone: null, role }, logout, refreshUser });
 
 beforeEach(() => {
   mockFetch.mockReset();
   mockReplace.mockReset();
   logout.mockReset().mockResolvedValue(undefined);
+  refreshUser.mockReset().mockResolvedValue(undefined);
+  (saveToken as jest.Mock).mockReset();
   (alertMessage as jest.Mock).mockReset();
 });
 
@@ -107,6 +112,106 @@ describe("회원 탈퇴", () => {
 
     expect(await screen.findByText("관리자 계정은 앱에서 탈퇴할 수 없습니다.")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "회원 탈퇴" })).toBeNull();
+  });
+});
+
+describe("내 정보 수정", () => {
+  const profileCalls = () => mockFetch.mock.calls.filter((c) => c[0] === "/api/account/profile");
+
+  beforeEach(() => {
+    asUser("USER");
+    mockFetch.mockImplementation(async (path: string) => (path === "/api/account" ? { socialOnly: false } : {}));
+  });
+
+  it("이름과 전화번호를 저장하고 화면의 사용자 정보를 갱신한다", async () => {
+    await render(<AccountScreen />);
+
+    await fireEvent.changeText(screen.getByLabelText("이름"), " 김철수 ");
+    await fireEvent.changeText(screen.getByLabelText("전화번호"), "010-1111-2222");
+    await fireEvent.press(screen.getByRole("button", { name: "저장" }));
+
+    await waitFor(() => expect(refreshUser).toHaveBeenCalled());
+    expect(profileCalls()[0][1]).toEqual({
+      method: "PUT",
+      body: JSON.stringify({ name: "김철수", phone: "010-1111-2222" }),
+    });
+    expect(alertMessage).toHaveBeenCalledWith("저장 완료", expect.any(String));
+  });
+
+  it("서버가 거절하면 안내하고 갱신하지 않는다", async () => {
+    mockFetch.mockImplementation(async (path: string) => {
+      if (path === "/api/account") return { socialOnly: false };
+      throw new Error("전화번호 형식이 올바르지 않습니다.");
+    });
+    await render(<AccountScreen />);
+
+    await fireEvent.press(screen.getByRole("button", { name: "저장" }));
+
+    expect(await screen.findByText("전화번호 형식이 올바르지 않습니다.")).toBeTruthy();
+    expect(refreshUser).not.toHaveBeenCalled();
+  });
+});
+
+describe("비밀번호 변경", () => {
+  const passwordCalls = () => mockFetch.mock.calls.filter((c) => c[0] === "/api/account/password");
+
+  const fill = async (current: string, next: string, confirm: string) => {
+    await fireEvent.changeText(await screen.findByLabelText("현재 비밀번호"), current);
+    await fireEvent.changeText(screen.getByLabelText("새 비밀번호"), next);
+    await fireEvent.changeText(screen.getByLabelText("새 비밀번호 확인"), confirm);
+    await fireEvent.press(screen.getByRole("button", { name: "비밀번호 변경" }));
+  };
+
+  beforeEach(() => {
+    asUser("USER");
+    mockFetch.mockImplementation(async (path: string) => {
+      if (path === "/api/account") return { socialOnly: false };
+      if (path === "/api/account/password") return { token: "new-token" };
+      return {};
+    });
+  });
+
+  it("바꾸면 새 토큰을 저장하고 입력칸을 비운다", async () => {
+    await render(<AccountScreen />);
+
+    await fill("Oldpass123", "Newpass123", "Newpass123");
+
+    await waitFor(() => expect(saveToken).toHaveBeenCalledWith("new-token"));
+    expect(passwordCalls()[0][1].body).toBe(JSON.stringify({ currentPassword: "Oldpass123", newPassword: "Newpass123" }));
+    expect(alertMessage).toHaveBeenCalledWith("변경 완료", expect.any(String));
+    expect(logout).not.toHaveBeenCalled();
+    await waitFor(() => expect(screen.getByLabelText("현재 비밀번호").props.value).toBe(""));
+  });
+
+  it("새 비밀번호가 서로 다르면 보내지 않는다", async () => {
+    await render(<AccountScreen />);
+
+    await fill("Oldpass123", "Newpass123", "Other12345");
+
+    expect(await screen.findByText("새 비밀번호가 서로 다릅니다.")).toBeTruthy();
+    expect(passwordCalls()).toHaveLength(0);
+  });
+
+  it("현재 비밀번호가 틀리면 안내하고 토큰을 바꾸지 않는다", async () => {
+    mockFetch.mockImplementation(async (path: string) => {
+      if (path === "/api/account") return { socialOnly: false };
+      throw new Error("현재 비밀번호가 올바르지 않습니다.");
+    });
+    await render(<AccountScreen />);
+
+    await fill("Wrong12345", "Newpass123", "Newpass123");
+
+    expect(await screen.findByText("현재 비밀번호가 올바르지 않습니다.")).toBeTruthy();
+    expect(saveToken).not.toHaveBeenCalled();
+  });
+
+  it("소셜 계정에는 비밀번호 변경이 없다", async () => {
+    mockFetch.mockImplementation(async () => ({ socialOnly: true }));
+    await render(<AccountScreen />);
+
+    await screen.findByRole("button", { name: "회원 탈퇴" });
+    expect(screen.queryByLabelText("현재 비밀번호")).toBeNull();
+    expect(screen.queryByRole("button", { name: "비밀번호 변경" })).toBeNull();
   });
 });
 
